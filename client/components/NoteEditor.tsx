@@ -8,6 +8,7 @@ import { LIMITS } from "@/shared/limits";
 import { byteLength, wordCount } from "@/shared/text";
 import { ConfirmDialog } from "./Modal";
 import { Markdown } from "./Markdown";
+import { LiveText } from "./LiveText";
 import { confirmLeave, setPending } from "@/client/lib/unsaved";
 
 interface Entry { day: string; body: string; words: number; createdAt: number; updatedAt: number }
@@ -34,6 +35,26 @@ export function NoteEditor({ id, continueToday }: { id: string; continueToday: b
   const [writing, setWriting] = useState(continueToday);
   const [ask, setAsk] = useState<{ kind: "note" } | { kind: "day"; day: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  // Leaving a note that has nothing written (no dated section and today's box empty) removes it.
+  const entryCountRef = useRef<number | null>(null);
+  const hasTextRef = useRef(false);
+  const onText = useCallback((has: boolean) => { hasTextRef.current = has; }, []);
+  useEffect(() => {
+    entryCountRef.current = data ? data.note.entryCount : null;
+  }, [data]);
+  useEffect(() => {
+    const dropIfEmpty = () => {
+      if (entryCountRef.current === 0 && !hasTextRef.current) {
+        entryCountRef.current = null; // once
+        void fetch(`/api/notes/${id}?ifEmpty=1`, { method: "DELETE", credentials: "same-origin", keepalive: true });
+      }
+    };
+    window.addEventListener("pagehide", dropIfEmpty);
+    return () => {
+      window.removeEventListener("pagehide", dropIfEmpty);
+      dropIfEmpty();
+    };
+  }, [id]);
 
   useEffect(() => {
     let alive = true;
@@ -109,7 +130,7 @@ export function NoteEditor({ id, continueToday }: { id: string; continueToday: b
         {open ? (
           <section id={`d-${data.today}`} className="entry entry-today" aria-label={`Today, ${dayLabel(data.today)}`}>
             <div className="entry-day"><span className="date">{dayLabel(data.today)}</span></div>
-            <TodayEditor key={data.today} noteId={id} day={data.today} initialBody={todayEntry?.body ?? ""} initialUpdatedAt={todayEntry?.updatedAt ?? null} onSaved={onSaved} onState={setState} />
+            <TodayEditor key={data.today} noteId={id} day={data.today} initialBody={todayEntry?.body ?? ""} initialUpdatedAt={todayEntry?.updatedAt ?? null} onSaved={onSaved} onState={setState} onText={onText} />
           </section>
         ) : (
           <div className="continue-box">
@@ -134,6 +155,7 @@ export function NoteEditor({ id, continueToday }: { id: string; continueToday: b
           try {
             if (ask.kind === "note") {
               await api(`/api/notes/${id}`, { method: "DELETE" });
+              entryCountRef.current = null;
               router.replace("/home?tab=archive");
               return;
             }
@@ -174,13 +196,14 @@ const DEBOUNCE_MS = 1200;
  * overwriting each other. Continuing on the same day adds one line break so you can start writing straight away
  * (it is only stored if you type). The box grows with the text, and the cursor starts after the last character.
  */
-function TodayEditor({ noteId, day, initialBody, initialUpdatedAt, onSaved, onState }: {
+function TodayEditor({ noteId, day, initialBody, initialUpdatedAt, onSaved, onState, onText }: {
   noteId: string;
   day: string;
   initialBody: string;
   initialUpdatedAt: number | null;
   onSaved: (n: NoteMeta) => void;
   onState: (s: SaveState) => void;
+  onText: (hasText: boolean) => void;
 }) {
   const start = initialBody && !initialBody.endsWith("\n") ? `${initialBody}\n` : initialBody;
   const [body, setBody] = useState(start);
@@ -191,25 +214,14 @@ function TodayEditor({ noteId, day, initialBody, initialUpdatedAt, onSaved, onSt
   const latest = useRef(start);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inFlight = useRef(false);
-  const [editing, setEditing] = useState(true);
   const key = `${noteId}/${day}`;
-
-  function resume() {
-    setEditing(true);
-    requestAnimationFrame(() => {
-      const el = ref.current;
-      if (!el) return;
-      const end = el.value.length;
-      el.focus({ preventScroll: true });
-      el.setSelectionRange(end, end);
-    });
-  }
 
   useEffect(() => {
     onState(state);
     setPending(key, state === "dirty" || state === "saving" || state === "error");
   }, [state, key, onState]);
   useEffect(() => () => setPending(key, false), [key]);
+  useEffect(() => onText(body.trim() !== ""), [body, onText]);
 
   // Grow with the text instead of scrolling inside the box.
   const fit = useCallback(() => {
@@ -282,24 +294,13 @@ function TodayEditor({ noteId, day, initialBody, initialUpdatedAt, onSaved, onSt
   return (
     <>
       <label className="sr-only" htmlFor={`e-${day}`}>Entry for {dayLabel(day)}</label>
-      {!editing && body.trim() !== "" && (
-        <div
-          className="editor editor-today editor-rendered"
-          role="button"
-          tabIndex={0}
-          aria-label="Formatted text. Click to continue writing."
-          onClick={resume}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); resume(); } }}
-        >
-          <Markdown text={body} />
-        </div>
-      )}
+      {/* Live formatting: the styled mirror sits behind a transparent textarea with the same box and text. */}
+      <div className="live-editor">
+        <div className="editor editor-today editor-mirror" aria-hidden="true"><LiveText text={body} /></div>
       <textarea
         ref={ref}
         id={`e-${day}`}
-        hidden={!editing && body.trim() !== ""}
-        onFocus={() => setEditing(true)}
-        className="editor editor-today"
+        className="editor editor-today editor-input"
         value={body}
         placeholder="Write…"
         spellCheck
@@ -311,8 +312,9 @@ function TodayEditor({ noteId, day, initialBody, initialUpdatedAt, onSaved, onSt
           if (timer.current) clearTimeout(timer.current);
           timer.current = setTimeout(() => { timer.current = null; void save(); }, DEBOUNCE_MS);
         }}
-        onBlur={() => { setEditing(false); void save(); }}
+        onBlur={() => void save()}
       />
+      </div>
       <div className="entry-tools">
         <span className="mono faint">{wordCount(body)} words</span>
         {state === "conflict" && <button className="btn btn-sm" type="button" onClick={() => window.location.reload()}>Reload</button>}

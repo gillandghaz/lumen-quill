@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.1 · 2026-11-28
+
+- **Live formatting while typing.** `**bold**` and `*italic*` appear bold and italic as you type. The markers stay in place but are smaller and faint, and the caret never shifts (bold is a thicker stroke and italic a slant, so glyph widths stay the same).
+- **Empty notes disappear.** Leaving a note that has nothing written removes it. Clearing today's text removes today's section. A daily clean-up also removes notes still empty after 24 hours.
+- **Export.**
+  - Notes are ordered by creation date, newest first, like the Archive.
+  - File names carry a date: a single note uses the day it was created (`2026-11-14-morning-pages.md`), and everything uses the export day (`lumen-quill-export-2026-11-28.md`).
+- **Dialogs** never show scrollbars; long words wrap.
+
 ## 0.3.0 · 2026-11-28
 
 - **Much larger imports.**

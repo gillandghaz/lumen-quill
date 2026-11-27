@@ -464,5 +464,40 @@ label.btn[aria-disabled="true"] { opacity: 0.6; pointer-events: none; }
 .editor-locked.editor-rendered { cursor: default; }
 
 /* Dialogs live in <body> (Portal) and are always centred on the screen; very short screens scroll inside. */
-.modal-backdrop { position: fixed; inset: 0; z-index: 60; overflow-y: auto; }
-.modal { max-height: calc(100vh - 2rem); overflow-y: auto; margin: auto; }
+.modal-backdrop { position: fixed; inset: 0; z-index: 60; overflow: hidden; }
+/* No scrollbars in a dialog: it fits the screen and long words wrap instead of widening it. */
+.modal { width: min(520px, calc(100vw - 2rem)); max-height: none; overflow: visible; overflow-wrap: anywhere; margin: auto; }
+
+/* ---- Live formatting while typing --------------------------------------
+   A styled mirror behind a transparent textarea. Both share font, size, padding, line height and wrapping, and no
+   style here changes a glyph's width, so the caret always sits on the right character. */
+.live-editor { position: relative; }
+.editor-mirror {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+  pointer-events: none;
+  color: var(--text);
+}
+.editor-input {
+  position: relative;
+  display: block;
+  color: transparent;
+  caret-color: var(--text);
+  background: transparent !important;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+.editor-input::placeholder { color: var(--faint); }
+.editor-input::selection { color: transparent; background: color-mix(in srgb, var(--accent) 30%, transparent); }
+/* Bold: thicker stroke, same advance widths. */
+.editor-mirror .md-b { -webkit-text-stroke: 0.045em currentColor; paint-order: stroke fill; }
+/* Italic: synthetic slant of the upright face, same advance widths. */
+.editor-mirror .md-i { font-style: oblique 10deg; font-synthesis: style; }
+/* Markers stay in place (their width is kept) but look smaller and faint. */
+.editor-mirror .md-mark { display: inline-block; transform: scale(0.72); transform-origin: 50% 70%; opacity: 0.28; font-style: normal; -webkit-text-stroke: 0; }

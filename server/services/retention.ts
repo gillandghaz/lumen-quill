@@ -4,6 +4,7 @@ import { Timestamp, type Query } from "../firebase";
 import { COLLECTIONS } from "../config";
 import { dayKey } from "@/shared/day";
 import { getRetention } from "./app-settings";
+import { purgeEmptyNotes } from "./notes";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -15,7 +16,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * - audit log (Security / Audit log): older than the admin's audit retention (1/3/7/30 days)
  * Bounded: at most 20 passes x 200 documents per collection per run.
  */
-export async function purgeExpired(db: Firestore, now: number): Promise<{ rateLimits: number; activity: number; audit: number }> {
+export async function purgeExpired(db: Firestore, now: number): Promise<{ rateLimits: number; activity: number; audit: number; emptyNotes: number }> {
   const r = await getRetention(db);
   const purge = async (q: () => Query) => {
     let removed = 0;
@@ -35,6 +36,7 @@ export async function purgeExpired(db: Firestore, now: number): Promise<{ rateLi
     rateLimits: await purge(() => db.collection(COLLECTIONS.rateLimits).where("expiresAt", "<", Timestamp.fromMillis(now))),
     activity: await purge(() => db.collection(COLLECTIONS.activity).where("day", "<", statsCutoffDay)),
     audit: await purge(() => db.collection(COLLECTIONS.audit).where("at", "<", now - r.auditDays * DAY_MS)),
+    emptyNotes: await purgeEmptyNotes(db, now),
   };
 }
 

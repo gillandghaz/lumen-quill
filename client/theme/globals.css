@@ -59,7 +59,7 @@
   --font-display: var(--f-cinzel), "Times New Roman", serif;
   --font-body: var(--f-cormorant), Georgia, serif;
   --font-mono: var(--f-mono), ui-monospace, monospace;
-  --font-editor: var(--f-cormorant), Georgia, serif;
+  --font-editor: var(--f-cormorant-upright), Georgia, serif;
   --editor-size: 1.24rem;
   --display-tracking: 0.08em;
   --glyph: "❦";

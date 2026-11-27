@@ -6,6 +6,7 @@ import { allNotesPortable, deleteAllNotes, importNotes, todayFor } from "../serv
 import { confirmSchema, exportQuery, importChunkSchema } from "@/shared/schemas";
 import { LIMITS } from "@/shared/limits";
 import { fileNameFor, serializeNotes } from "@/shared/markdown-io";
+import { dayKey } from "@/shared/day";
 import { download, json } from "./respond";
 import { body, query, safe, writer, type Handler } from "./kit";
 
@@ -15,7 +16,12 @@ export const exportH: Handler = safe(async (req, deps) => {
   await deps.limiter.hit("export", u.identity.uid, RULES.export);
   const { format, noteId } = exportQuery.parse(query(req));
   const list = await allNotesPortable(deps.db, u.identity.uid, noteId);
-  const name = noteId && list[0] ? fileNameFor(list[0].title, format) : `lumen-quill-${todayFor(u.profile.settings.timeZone, deps.now())}.${format}`;
+  // File names carry a date: one note → the day it was created (e.g. 2026-11-14-morning-pages.md);
+  // everything → the export day (lumen-quill-export-2026-11-28.md). Dates follow the writer's time zone.
+  const tz = u.profile.settings.timeZone;
+  const name = noteId && list[0]
+    ? `${dayKey(list[0].createdAt, tz)}-${fileNameFor(list[0].title, format)}`
+    : `lumen-quill-export-${todayFor(tz, deps.now())}.${format}`;
   return download(serializeNotes(list), name, format === "md" ? "text/markdown" : "text/plain");
 });
 

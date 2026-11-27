@@ -11,6 +11,9 @@ const inter = Inter({ subsets: ["latin"], variable: "--f-inter", display: "swap"
 const rajdhani = Rajdhani({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--f-rajdhani", display: "swap" });
 const cinzel = Cinzel({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--f-cinzel", display: "swap" });
 const cormorant = Cormorant_Garamond({ subsets: ["latin"], weight: ["400", "500", "600"], style: ["normal", "italic"], variable: "--f-cormorant", display: "swap" });
+// Editor face in Palace: upright only, so live *italic* is a synthetic slant with exactly the same glyph widths
+// as the transparent textarea on top (a real italic face has different widths and would shift the caret).
+const cormorantUpright = Cormorant_Garamond({ subsets: ["latin"], weight: ["400", "500", "600"], style: ["normal"], variable: "--f-cormorant-upright", display: "swap" });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--f-mono", display: "swap" });
 
 export const metadata: Metadata = {
@@ -26,7 +29,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const cookieMode = jar.get(MODE_COOKIE)?.value;
   const mode: Mode = ctx.configured && ctx.user ? ctx.user.settings.mode : isMode(cookieMode) ? cookieMode : "sonata";
   return (
-    <html lang="en" data-mode={mode} className={[inter.variable, rajdhani.variable, cinzel.variable, cormorant.variable, mono.variable].join(" ")}>
+    <html lang="en" data-mode={mode} className={[inter.variable, rajdhani.variable, cinzel.variable, cormorant.variable, cormorantUpright.variable, mono.variable].join(" ")}>
       <body>
         <div className="backdrop" aria-hidden="true" />
         <a className="skip-link" href="#main">Skip to content</a>

@@ -1,9 +1,10 @@
+import { z } from "zod";
 import { requireUser } from "../session";
 import { RULES } from "../security/rate-limit";
 import { HttpError } from "../errors";
 import { writeAudit } from "../services/audit";
 import {
-  createNote, deleteEntry, overview, timeline, deleteNote, getNote, listNotes, renameNote, saveEntry, todayFor, writeTarget,
+  createNote, deleteEntry, deleteNoteIfEmpty, overview, timeline, deleteNote, getNote, listNotes, renameNote, saveEntry, todayFor, writeTarget,
 } from "../services/notes";
 import { createNoteSchema, daySchema, listNotesQuery, renameNoteSchema, saveEntrySchema, timelineQuery } from "@/shared/schemas";
 import { LIMITS } from "@/shared/limits";
@@ -43,9 +44,13 @@ export const renameNoteH: Handler = safe(async (req, deps, p) => {
   return json(200, { ok: true });
 });
 
+const deleteQuery = z.object({ ifEmpty: z.enum(["1"]).optional() }).strict();
+
 export const deleteNoteH: Handler = safe(async (req, deps, p) => {
   const u = await writer(req, deps);
   const id = validId(p["id"]);
+  // Leaving a note that was never written in: remove it only if it is still empty.
+  if (deleteQuery.parse(query(req)).ifEmpty) return json(200, { deleted: await deleteNoteIfEmpty(deps.db, u.identity.uid, id) });
   await deleteNote(deps.db, u.identity.uid, id);
   await writeAudit(deps.db, { action: "note.delete", actorUid: u.identity.uid }, deps.now());
   return json(200, { ok: true });

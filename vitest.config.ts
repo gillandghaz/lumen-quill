@@ -9,5 +9,5 @@ export default defineConfig({
       "@/client": fileURLToPath(new URL("./client", import.meta.url)),
     },
   },
-  test: { include: ["tests/**/*.test.ts"], environment: "node" },
+  test: { include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"], environment: "node" },
 });
