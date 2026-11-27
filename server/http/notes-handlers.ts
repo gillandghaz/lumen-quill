@@ -15,7 +15,7 @@ export const listNotesH: Handler = safe(async (req, deps) => {
   const u = await requireUser(req, deps);
   const q = listNotesQuery.parse(query(req));
   if (q.q) await deps.limiter.hit("search", u.identity.uid, RULES.search);
-  return json(200, await listNotes(deps.db, u.identity.uid, { cursor: q.cursor, q: q.q, count: q.count === "1" }));
+  return json(200, await listNotes(deps.db, u.identity.uid, { page: q.page ? Number(q.page) : undefined, q: q.q }));
 });
 
 export const writeTargetH: Handler = safe(async (req, deps) => {

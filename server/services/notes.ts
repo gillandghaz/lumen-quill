@@ -66,36 +66,49 @@ export function todayFor(timeZone: string, now: number): string {
 
 const PAGE = NOTES_PAGE_SIZE;
 
-export async function listNotes(db: Firestore, uid: string, opts: { cursor?: string; q?: string; count?: boolean }): Promise<{ items: NoteMeta[]; nextCursor: string | null; total?: number }> {
+/**
+ * Archive: notes in creation order (newest first), NOTES_PAGE_SIZE per numbered page. Any page number may be asked
+ * for; a page past the end comes back empty together with the real number of pages. Firestore bills skipped rows
+ * of an offset as reads, so pages are capped (5000 notes / 20 = 250 pages at most).
+ */
+export async function listNotes(db: Firestore, uid: string, opts: { page?: number; q?: string }): Promise<{ items: NoteMeta[]; page: number; pages: number; total: number }> {
+  const mine = notes(db).where("ownerUid", "==", uid);
   if (opts.q && opts.q.trim()) {
-    // Title / preview search over the user's most recent notes (bounded scan; caller rate-limits it).
+    // Title / preview search over the user's notes (bounded scan; caller rate-limits it).
     const needle = opts.q.trim().toLowerCase();
-    const snap = await notes(db).where("ownerUid", "==", uid).orderBy("createdAt", "desc").limit(500).get();
-    const items = snap.docs.map((d) => toMeta(d.id, d.data() as NoteDoc)).filter((n) => n.title.toLowerCase().includes(needle) || n.preview.toLowerCase().includes(needle));
-    return { items: items.slice(0, 100), nextCursor: null };
+    const snap = await mine.orderBy("createdAt", "desc").limit(500).get();
+    const items = snap.docs.map((d) => toMeta(d.id, d.data() as NoteDoc)).filter((n) => n.title.toLowerCase().includes(needle) || n.preview.toLowerCase().includes(needle)).slice(0, 100);
+    return { items, page: 1, pages: 1, total: items.length };
   }
-  // Archive order: when a note was created (first written), newest first. Editing never reshuffles the list.
-  let q = notes(db).where("ownerUid", "==", uid).orderBy("createdAt", "desc").orderBy("__name__", "desc").limit(PAGE + 1);
-  if (opts.cursor) {
-    const [at, lastId] = opts.cursor.split("|");
-    if (!Number.isFinite(Number(at)) || Number(at) < 0 || !lastId || !/^[A-Za-z0-9_-]{16,64}$/.test(lastId)) throw new HttpError(400, "bad_request");
-    q = q.startAfter(Number(at), lastId);
-  }
-  const snap = await q.get();
-  const docs = snap.docs.slice(0, PAGE);
-  const items = docs.map((d) => toMeta(d.id, d.data() as NoteDoc));
-  // The total (for "page x of y") is a cheap aggregation, asked for only on the first page.
-  const total = opts.count ? (await notes(db).where("ownerUid", "==", uid).count().get()).data().count : undefined;
-  return { items, nextCursor: snap.docs.length > PAGE && items.length ? `${items[items.length - 1]!.createdAt}|${items[items.length - 1]!.id}` : null, ...(total !== undefined ? { total } : {}) };
+  const total = (await mine.count().get()).data().count;
+  const pages = Math.max(1, Math.ceil(total / PAGE));
+  const page = Math.min(Math.max(1, opts.page ?? 1), 100_000);
+  if (page > pages || page > Math.ceil(LIMITS.notesPerUser / PAGE)) return { items: [], page, pages, total };
+  const snap = await mine.orderBy("createdAt", "desc").orderBy("__name__", "desc").offset((page - 1) * PAGE).limit(PAGE).get();
+  return { items: snap.docs.map((d) => toMeta(d.id, d.data() as NoteDoc)), page, pages, total };
 }
 
 /** The note "Write" should open, and today's date for this user. */
+/**
+ * The note "Write today" continues: the one you last WROTE in (latest dated section; ties → newest created).
+ * Exception: a note you created today with "New note" and left empty is opened instead, as if written today.
+ * (Ordering by last write time would pick an arbitrary note after an import, when all share one timestamp.)
+ */
 export async function writeTarget(db: Firestore, uid: string, timeZone: string, now: number) {
   const today = todayFor(timeZone, now);
-  const snap = await notes(db).where("ownerUid", "==", uid).orderBy("updatedAt", "desc").limit(1).get();
-  const d = snap.docs[0];
-  const latest = d ? toMeta(d.id, d.data() as NoteDoc) : null;
-  return { today, latest, writtenToday: latest?.lastDay === today };
+  const mine = notes(db).where("ownerUid", "==", uid);
+  const [byDay, byCreated] = await Promise.all([
+    mine.orderBy("lastDay", "desc").orderBy("createdAt", "desc").limit(1).get(),
+    mine.orderBy("createdAt", "desc").limit(1).get(),
+  ]);
+  const newest = byCreated.docs[0] ? toMeta(byCreated.docs[0].id, byCreated.docs[0].data() as NoteDoc) : null;
+  if (newest && newest.lastDay === null && todayFor(timeZone, newest.createdAt) === today) {
+    return { today, latest: newest, writtenToday: true };
+  }
+  const d = byDay.docs[0];
+  const written = d ? toMeta(d.id, d.data() as NoteDoc) : null;
+  const latest = written && written.lastDay !== null ? written : newest;
+  return { today, latest, writtenToday: latest !== null && (latest.lastDay === today || latest.entryCount === 0) };
 }
 
 async function assertNoteQuota(db: Firestore, uid: string, adding = 1): Promise<void> {

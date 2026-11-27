@@ -433,3 +433,12 @@ label.btn[aria-disabled="true"] { opacity: 0.6; pointer-events: none; }
 .form-hint { margin-top: 0.75rem; }
 .backup-range { margin-bottom: 1rem; }
 .backup-action { margin-top: 1.25rem; }
+
+/* Buttons next to an input (Save username, Delete all notes) are exactly as tall as that input, in both modes. */
+.inline-form .input,
+.inline-form .btn { height: 2.75rem; min-height: 2.75rem; }
+.inline-form .btn { flex: none; padding-top: 0; padding-bottom: 0; }
+
+/* Archive page jump */
+.page-jump { display: inline-flex; align-items: center; gap: 0.5rem; }
+.page-input { width: 4.2rem; min-height: 2rem; height: 2rem; padding: 0.2rem 0.5rem; text-align: center; font-family: var(--font-mono); }
