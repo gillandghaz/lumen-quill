@@ -3,13 +3,14 @@ import { COLLECTIONS, USERNAME_CHANGE_INTERVAL_MS } from "../config";
 import { HttpError } from "../errors";
 import type { Role } from "../auth";
 import { DEFAULT_TIME_ZONE } from "@/shared/day";
-import type { Mode, NextDayBehavior } from "@/shared/limits";
+import type { HomeTab, Mode, NextDayBehavior } from "@/shared/limits";
 
 export interface UserSettings {
   mode: Mode;
   timeZone: string;
   nextDay: NextDayBehavior;
   fontScale: number;
+  homeTab: HomeTab;
 }
 
 export interface Profile {
@@ -22,10 +23,12 @@ export interface Profile {
   createdBy: string;
   lastLoginAt: number | null;
   usernameChangedAt: number | null;
+  /** updatedAt of the custom profile photo (cache-buster); null = themed default avatar. */
+  avatarVersion: number | null;
   settings: UserSettings;
 }
 
-export const DEFAULT_SETTINGS: UserSettings = { mode: "sonata", timeZone: DEFAULT_TIME_ZONE, nextDay: "ask", fontScale: 1 };
+export const DEFAULT_SETTINGS: UserSettings = { mode: "sonata", timeZone: DEFAULT_TIME_ZONE, nextDay: "ask", fontScale: 1, homeTab: "overview" };
 
 /** Reserved names cannot be taken by anyone (impersonation of staff/system). */
 const RESERVED = new Set(["admin", "administrator", "root", "system", "support", "lumen", "lumenquill", "quill", "security", "staff", "owner", "help", "api", "null", "undefined"]);
@@ -42,6 +45,7 @@ export function normalizeProfile(uid: string, d: Record<string, unknown>): Profi
     createdBy: typeof d["createdBy"] === "string" ? d["createdBy"] : "",
     lastLoginAt: typeof d["lastLoginAt"] === "number" ? d["lastLoginAt"] : null,
     usernameChangedAt: typeof d["usernameChangedAt"] === "number" ? d["usernameChangedAt"] : null,
+    avatarVersion: typeof d["avatarVersion"] === "number" ? d["avatarVersion"] : null,
     settings: { ...DEFAULT_SETTINGS, ...s },
   };
 }

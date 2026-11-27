@@ -7,7 +7,17 @@ export const MODE_LABEL: Record<Mode, string> = { sonata: "Sonata", palace: "Pal
 
 /** Applies a mode instantly (no reload) and remembers it in a non-sensitive cookie for server rendering. */
 export function applyMode(mode: Mode): void {
-  document.documentElement.dataset["mode"] = mode;
+  const root = document.documentElement;
+  const swap = () => { root.dataset["mode"] = mode; };
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Smooth hand-over between Sonata and Palace: a cross-fade where supported, colour transitions otherwise.
+  const vt = (document as Document & { startViewTransition?: (cb: () => void) => unknown }).startViewTransition;
+  if (vt && !reduce && root.dataset["mode"] !== mode) vt.call(document, swap);
+  else {
+    root.classList.add("mode-shift");
+    swap();
+    window.setTimeout(() => root.classList.remove("mode-shift"), 600);
+  }
   const secure = window.location.protocol === "https:" ? "; Secure" : "";
   document.cookie = `${MODE_COOKIE}=${mode}; Path=/; Max-Age=31536000; SameSite=Lax${secure}`;
 }

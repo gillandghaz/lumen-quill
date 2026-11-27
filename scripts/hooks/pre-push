@@ -1,0 +1,11 @@
+#!/bin/sh
+# Refuse pushes that update main directly: every change reaches main through a pull request (CONTRIBUTING.md).
+# Active after: git config core.hooksPath scripts/hooks
+# stdin lines: <local ref> <local sha> <remote ref> <remote sha>
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    echo "pre-push: direct pushes to main are not allowed. Push a branch and open a pull request instead." >&2
+    exit 1
+  fi
+done
+exit 0

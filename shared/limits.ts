@@ -21,3 +21,17 @@ export const MODE_COOKIE = "la_mode";
 /** What "Write" does when the latest note was last written on an earlier day. */
 export const NEXT_DAY = ["ask", "continue", "new"] as const;
 export type NextDayBehavior = (typeof NEXT_DAY)[number];
+
+/** Which Home tab opens first. */
+/** Home tabs: Overview, Notes (every dated entry, newest first), Archive (the list of notes). */
+export const HOME_TABS = ["overview", "notes", "archive"] as const;
+export type HomeTab = (typeof HOME_TABS)[number];
+export const isHomeTab = (v: unknown): v is HomeTab => typeof v === "string" && (HOME_TABS as readonly string[]).includes(v);
+
+/** Admin retention choices (days) for statistics and audit data. */
+export const RETENTION_DAYS = [1, 3, 7, 30] as const;
+export type RetentionDays = (typeof RETENTION_DAYS)[number];
+
+export const NOTES_PAGE_SIZE = 15;
+export const TIMELINE_PAGE_SIZE = 20;
+export const AVATAR_MAX_CHARS = 120_000;

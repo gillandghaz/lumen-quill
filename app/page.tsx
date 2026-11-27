@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { BrandMark } from "@/client/components/BrandMark";
 import { LandingModes } from "@/client/components/LandingModes";
 import { isMode, MODE_COOKIE } from "@/shared/limits";
@@ -7,14 +8,15 @@ import { loadPageContext } from "@/server/page-guards";
 
 export default async function Landing() {
   const [ctx, jar] = await Promise.all([loadPageContext(), cookies()]);
-  const signedIn = ctx.configured && ctx.user !== null;
+  // Signed in: straight to the app (Home opens on the tab chosen in Settings).
+  if (ctx.configured && ctx.user) redirect("/home");
   const cm = jar.get(MODE_COOKIE)?.value;
   const mode = ctx.configured && ctx.user ? ctx.user.settings.mode : isMode(cm) ? cm : "sonata";
   return (
     <>
       <header className="landing-top">
         <Link href="/" className="brand"><BrandMark />Lumen Quill</Link>
-        <Link className="btn btn-primary" href={signedIn ? "/archive" : "/login"}>{signedIn ? "Open archive" : "Sign in"}</Link>
+        <Link className="btn btn-primary" href="/login">Sign in</Link>
       </header>
 
       <main id="main">
@@ -27,7 +29,7 @@ export default async function Landing() {
               come back tomorrow and choose to continue the story or begin a new one.
             </p>
             <div className="btn-row">
-              <Link className="btn btn-primary" href={signedIn ? "/archive" : "/login"}>{signedIn ? "Continue writing" : "Sign in"}</Link>
+              <Link className="btn btn-primary" href="/login">Sign in</Link>
               <a className="btn btn-ghost" href="#modes">See the two modes</a>
             </div>
             <p className="hint" style={{ marginTop: "1rem" }}>Invitation only. Accounts are created by the archive keeper.</p>

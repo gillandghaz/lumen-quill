@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.2.0 · 2026-11-28
+
+- **New layout.** Fixed top bar with the brand and a profile photo menu (Home, Settings, Sign out with confirmation).
+  - **Home** has Overview (today, totals, streak, recent notes), Notes (every dated entry, newest first) and Archive (the list of notes, 15 per page with "page x of y"). The first tab is a preference.
+  - **Settings** has Account, Preferences, Data and Admin.
+- **Sign-in routing.** Signed-in visitors of `/` and `/login` go straight to Home. Signed-out visitors of app pages go to sign-in. Old addresses (`/archive`, `/account`, `/data`, `/admin`) redirect.
+- **Account.**
+  - Custom profile photo (256 px JPEG, checked on the server) or a themed default emblem.
+  - Usernames are unique.
+  - Passwords are changed only through an e-mailed reset link. Google-only accounts can create a password.
+- **Preferences** fit in one compact panel with segmented controls.
+- **Data.** "Delete all" now needs the typed phrase and a final confirmation dialog.
+- **Admin.**
+  - Accounts show photos, scroll after 5 rows and paginate per 10.
+  - Disable, enable, sign out and delete each ask for confirmation in a dialog.
+  - The create-account form is aligned.
+  - Statistics, Security and Audit log are separate tabs. Long lists scroll.
+  - Statistics now reads tiny daily counters instead of scanning notes.
+  - Statistics and the audit log each have an auto-delete setting (1, 3, 7 or 30 days).
+  - Backups can be limited to a date range.
+- **Autosave status.** The note shows Saving… → All changes saved. The browser's own dialog warns before leaving while a save is pending.
+- **Motion.** Smooth page, tab and dialog transitions, a cross-fade when switching modes, and hover feedback on buttons, cards and menus. Motion is reduced when the system asks for it.
+- **Fixes.**
+  - The Sonata "Sign in" button text was light on gold; it is now dark.
+  - The Palace ruled lines now sit exactly under each line of text.
+  - Overview failed on a combined sum query.
+  - Firestore settings could be applied twice across bundles.
+- **Workflow.** Changes reach `main` only through pull requests (CONTRIBUTING.md, pre-push hook, `pr-only` CI job). The favicon is a round seal.
+
 ## 0.1.0 · 2026-11-27
 
 First release.

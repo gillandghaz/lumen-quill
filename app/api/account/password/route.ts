@@ -1,4 +1,5 @@
 import { route } from "@/server/http/kit";
-import { setPasswordH } from "@/server/http/account-handlers";
+import { createPasswordH, passwordStatusH } from "@/server/http/account-handlers";
 
-export const POST = route(setPasswordH);
+export const GET = route(passwordStatusH);
+export const POST = route(createPasswordH);

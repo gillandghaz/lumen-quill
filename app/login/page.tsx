@@ -8,7 +8,7 @@ export const metadata = { title: "Sign in" };
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const ctx = await loadPageContext();
-  if (ctx.configured && ctx.user) redirect("/archive");
+  if (ctx.configured && ctx.user) redirect("/home");
   const reason = (await searchParams)["reason"];
   return (
     <>

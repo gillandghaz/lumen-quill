@@ -27,6 +27,15 @@ const apiHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Old addresses keep working.
+  async redirects() {
+    return [
+      { source: "/archive", destination: "/home?tab=archive", permanent: false },
+      { source: "/account", destination: "/settings?tab=account", permanent: false },
+      { source: "/data", destination: "/settings?tab=data", permanent: false },
+      { source: "/admin", destination: "/settings?tab=admin", permanent: false },
+    ];
+  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

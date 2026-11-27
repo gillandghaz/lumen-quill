@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { Cinzel, Cormorant_Garamond, Inter, JetBrains_Mono, Rajdhani } from "next/font/google";
 import "@/client/theme/globals.css";
+import "@/client/theme/ui.css";
 import { isMode, MODE_COOKIE, type Mode } from "@/shared/limits";
 import { loadPageContext } from "@/server/page-guards";
 

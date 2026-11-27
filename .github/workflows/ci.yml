@@ -54,3 +54,24 @@ jobs:
           tar -xzf gitleaks.tar.gz gitleaks
       - name: Scan full git history
         run: '"$RUNNER_TEMP/gitleaks" git --redact --no-banner --verbose --exit-code 1 .'
+  # main is updated only through pull requests (CONTRIBUTING.md). GitHub Free cannot block a direct push to a
+  # private repository, so this job turns such a commit red on main for everyone to see.
+  pr-only:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Commit on main must come from a merged pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          n=$(gh api "repos/$REPO/commits/$SHA/pulls" --jq '[.[] | select(.merged_at != null)] | length')
+          if [ "$n" = "0" ]; then
+            echo "::error::Commit $SHA reached main without a pull request. Use a branch + PR (see CONTRIBUTING.md)."
+            exit 1
+          fi
+          echo "OK: $SHA came from a merged pull request."
