@@ -34,9 +34,12 @@ The browser never talks to Firestore. The Firebase web API key is public by desi
 | XSS | No raw HTML anywhere (lint rule bans `dangerouslySetInnerHTML`); Markdown rendered to React elements; strict **nonce-based CSP** with `strict-dynamic`, no `unsafe-inline`/`unsafe-eval` scripts | `proxy.ts`, `client/components/Markdown.tsx` |
 | Headers | HSTS (preload), `X-Frame-Options: DENY`, `frame-ancestors 'none'`, nosniff, COOP, CORP, Referrer-Policy, Permissions-Policy; API: `default-src 'none'`, `no-store`; downloads are `attachment` + sandboxed | `next.config.ts`, `server/http/respond.ts` |
 | Import / export | Text only (.md / .txt), parsed in the browser and again on the server with limits; control characters stripped; file names ASCII-sanitised | `shared/markdown-io.ts`, `server/http/data-handlers.ts` |
-| Logs & audit | Logs carry error names/codes only; the audit log stores ids, codes and counts (never note text or e-mail), kept 180 days | `server/services/audit.ts` |
-| Retention | Daily Vercel Cron (constant-time bearer secret, fails closed) removes expired rate-limit counters and old audit entries | `server/services/retention.ts` |
+| Logs & audit | Logs carry error names/codes only; the audit log stores ids, codes and counts (never note text or e-mail), kept 1/3/7/30 days (admin setting) | `server/services/audit.ts`, `server/services/app-settings.ts` |
+| Profile photos | Made in the browser as a 256 px JPEG; the server checks JPEG magic bytes and size (≤ 90 KB) and serves them only to the owner and the admin with `image/jpeg`, `nosniff` and CSP `default-src 'none'` | `server/services/avatar.ts` |
+| Passwords | Never changed inside the app: only via the e-mailed reset link; a Google-only account may create one (sign-in ≤ 10 min old, all sessions revoked after) | `server/http/account-handlers.ts` |
+| Retention | Daily Vercel Cron (constant-time bearer secret, fails closed) and every retention change remove expired rate-limit counters, statistics counters and audit entries older than the admin's setting | `server/services/retention.ts` |
 | Secrets | Only in Vercel env and a local file outside the repo; `.gitignore`; gitleaks over the full history in CI and an optional pre-commit hook | `.gitleaks.toml`, `.github/workflows/ci.yml` |
+| Change control | Every change reaches `main` (production) through a pull request with green CI; a pre-push hook refuses direct pushes and the `pr-only` CI job flags any commit on `main` without a PR | `CONTRIBUTING.md`, `scripts/hooks/pre-push` |
 | Dependencies | Exact versions, `npm audit --audit-level=low` (zero vulnerabilities) and OSV-Scanner in CI, Dependabot weekly | `package.json`, `.github/*` |
 
 ## Firebase Auth project settings (expected)

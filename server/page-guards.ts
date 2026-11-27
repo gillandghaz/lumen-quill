@@ -9,6 +9,7 @@ export interface PageUser {
   username: string;
   admin: boolean;
   provider: string | null;
+  avatarVersion: number | null;
   settings: UserSettings;
 }
 
@@ -31,11 +32,11 @@ export const loadPageContext = cache(async (): Promise<PageContext> => {
     return {
       configured: true,
       user: u
-        ? { uid: u.identity.uid, email: u.identity.email, username: u.profile.username, admin: isAdmin(u), provider: u.identity.signInProvider, settings: u.profile.settings }
+        ? { uid: u.identity.uid, email: u.identity.email, username: u.profile.username, admin: isAdmin(u), provider: u.identity.signInProvider, avatarVersion: u.profile.avatarVersion, settings: u.profile.settings }
         : null,
     };
   } catch (e) {
-    console.error("page_context_unavailable", e instanceof Error ? e.name : "unknown");
+    console.error("page_context_unavailable", e instanceof Error ? e.name : "unknown", String((e as { code?: unknown } | null)?.code ?? "-"), (e as { digest?: unknown } | null)?.digest ? "digest" : "");
     return { configured: false };
   }
 });

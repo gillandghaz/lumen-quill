@@ -24,7 +24,7 @@ export function LoginForm() {
     setError(null);
     const r = await p;
     if (r.ok) {
-      window.location.replace("/archive");
+      window.location.replace("/home");
       return;
     }
     setError(TEXT[r.code]);

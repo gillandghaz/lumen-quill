@@ -7,6 +7,9 @@ import type { CurrentUser } from "../session";
 import { DEFAULT_SETTINGS, normalizeProfile, reserveUsername, type Profile } from "./profile";
 import { deleteAllNotes } from "./notes";
 import { writeAudit } from "./audit";
+import { readActivity } from "./activity";
+import { getRetention } from "./app-settings";
+import { dayKey } from "@/shared/day";
 
 export interface AdminUserView {
   uid: string;
@@ -18,6 +21,7 @@ export interface AdminUserView {
   lastLoginAt: number | null;
   notes: number;
   providers: string[];
+  avatarVersion: number | null;
 }
 
 export async function listUsers(deps: Deps): Promise<AdminUserView[]> {
@@ -38,6 +42,7 @@ export async function listUsers(deps: Deps): Promise<AdminUserView[]> {
     lastLoginAt: p.lastLoginAt,
     notes: counts[i] ?? 0,
     providers: byUid.get(p.uid)?.providerData.map((x) => x.providerId) ?? [],
+    avatarVersion: p.avatarVersion,
   }));
 }
 
@@ -71,6 +76,7 @@ export async function createUser(deps: Deps, admin: CurrentUser, input: { email:
         createdBy: admin.identity.uid,
         lastLoginAt: null,
         usernameChangedAt: null,
+        avatarVersion: null,
         settings: DEFAULT_SETTINGS,
       };
       tx.create(deps.db.collection(COLLECTIONS.users).doc(uid), profile);
@@ -80,7 +86,7 @@ export async function createUser(deps: Deps, admin: CurrentUser, input: { email:
     throw e;
   }
   await writeAudit(deps.db, { action: "admin.user_create", actorUid: admin.identity.uid, targetUid: uid, details: { password: Boolean(input.password) } }, now);
-  return { uid, email: input.email, username: input.username, role: "user", disabled: false, createdAt: now, lastLoginAt: null, notes: 0, providers: input.password ? ["password"] : [] };
+  return { uid, email: input.email, username: input.username, role: "user", disabled: false, createdAt: now, lastLoginAt: null, notes: 0, providers: input.password ? ["password"] : [], avatarVersion: null };
 }
 
 async function targetUser(deps: Deps, admin: CurrentUser, uid: string): Promise<Profile> {
@@ -115,6 +121,7 @@ export async function deleteUser(deps: Deps, admin: CurrentUser, uid: string): P
   const removed = await deleteAllNotes(deps.db, uid);
   const batch = deps.db.batch();
   batch.delete(deps.db.collection(COLLECTIONS.users).doc(uid));
+  batch.delete(deps.db.collection(COLLECTIONS.avatars).doc(uid));
   if (p.username) batch.delete(deps.db.collection(COLLECTIONS.usernames).doc(p.username));
   await batch.commit();
   await adminAuth().deleteUser(uid).catch((e) => {
@@ -152,54 +159,58 @@ export async function listAudit(deps: Deps, cursor?: string) {
   return { items, nextCursor: snap.docs.length > 50 && items.length ? String(items[items.length - 1]!.at) : null };
 }
 
-/** Statistics from aggregation queries (cheap: one read per 1000 index entries) and a bounded 30-day scan. */
+/**
+ * Statistics without scanning notes: totals are aggregation queries (one read per 1000 index entries) and the
+ * activity chart reads the small daily counters (activity/{day}) kept for the admin's statistics retention window.
+ */
 export async function stats(deps: Deps) {
   const db = deps.db;
-  const since = deps.now() - 30 * 24 * 60 * 60 * 1000;
-  const [users, notes, entries, wordsAgg, recent] = await Promise.all([
+  const retention = await getRetention(db);
+  const since = dayKey(deps.now() - (retention.statsDays - 1) * 86_400_000, "UTC");
+  const [users, notes, entries, wordsAgg, activity] = await Promise.all([
     db.collection(COLLECTIONS.users).count().get(),
     db.collection(COLLECTIONS.notes).count().get(),
     db.collectionGroup(COLLECTIONS.entries).count().get(),
     db.collection(COLLECTIONS.notes).aggregate({ words: AggregateField.sum("words") }).get(),
-    db.collectionGroup(COLLECTIONS.entries).where("updatedAt", ">=", since).select("day", "words").limit(3000).get(),
+    readActivity(db, since),
   ]);
-  const perDay = new Map<string, { entries: number; words: number }>();
-  for (const d of recent.docs) {
-    const day = d.get("day") as string;
-    const cur = perDay.get(day) ?? { entries: 0, words: 0 };
-    perDay.set(day, { entries: cur.entries + 1, words: cur.words + ((d.get("words") as number) ?? 0) });
-  }
   return {
     users: users.data().count,
     notes: notes.data().count,
     entries: entries.data().count,
     words: Number(wordsAgg.data().words ?? 0),
-    activity: [...perDay.entries()].map(([day, v]) => ({ day, ...v })).sort((a, b) => a.day.localeCompare(b.day)),
-    recentSample: recent.size,
+    activity,
+    retention,
   };
 }
 
 /**
  * Backup, one page at a time (Vercel limits a response to ~4.5 MB): profiles on the first page, then notes with their
  * entries, 25 notes per page. The browser joins the pages into one JSON file. Read-only, rate-limited and audited.
+ * Optional `from` / `to` (YYYY-MM-DD, inclusive) keep only entries written on those days, and only notes that have one.
  */
-export async function backupPage(deps: Deps, admin: CurrentUser, cursor?: string) {
+export async function backupPage(deps: Deps, admin: CurrentUser, opts: { cursor?: string; from?: string; to?: string }) {
   const db = deps.db;
-  const first = !cursor;
+  const first = !opts.cursor;
+  if (opts.from && opts.to && opts.from > opts.to) throw new HttpError(400, "bad_range");
   let q = db.collection(COLLECTIONS.notes).orderBy("createdAt", "asc").limit(26);
-  if (cursor) {
-    const at = Number(cursor);
+  if (opts.cursor) {
+    const at = Number(opts.cursor);
     if (!Number.isFinite(at)) throw new HttpError(400, "bad_request");
     q = q.startAfter(at);
   }
   const snap = await q.get();
   const docs = snap.docs.slice(0, 25);
-  const notes = await Promise.all(docs.map(async (d) => {
-    const es = await d.ref.collection(COLLECTIONS.entries).orderBy("day", "asc").get();
+  const ranged = Boolean(opts.from || opts.to);
+  const notes = (await Promise.all(docs.map(async (d) => {
+    let eq = d.ref.collection(COLLECTIONS.entries).orderBy("day", "asc");
+    if (opts.from) eq = eq.where("day", ">=", opts.from);
+    if (opts.to) eq = eq.where("day", "<=", opts.to);
+    const es = await eq.get();
     return { id: d.id, ...d.data(), entries: es.docs.map((e) => e.data()) };
-  }));
+  }))).filter((n) => !ranged || n.entries.length > 0);
   const users = first ? (await db.collection(COLLECTIONS.users).limit(500).get()).docs.map((d) => ({ uid: d.id, ...d.data() })) : undefined;
-  if (first) await writeAudit(db, { action: "admin.backup", actorUid: admin.identity.uid }, deps.now());
+  if (first) await writeAudit(db, { action: "admin.backup", actorUid: admin.identity.uid, details: { from: opts.from ?? "", to: opts.to ?? "" } }, deps.now());
   return { users, notes, nextCursor: snap.docs.length > 25 && docs.length ? String(docs[docs.length - 1]!.get("createdAt")) : null };
 }
 

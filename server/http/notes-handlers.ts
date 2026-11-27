@@ -3,9 +3,9 @@ import { RULES } from "../security/rate-limit";
 import { HttpError } from "../errors";
 import { writeAudit } from "../services/audit";
 import {
-  createNote, deleteEntry, deleteNote, getNote, listNotes, renameNote, saveEntry, todayFor, writeTarget,
+  createNote, deleteEntry, overview, timeline, deleteNote, getNote, listNotes, renameNote, saveEntry, todayFor, writeTarget,
 } from "../services/notes";
-import { createNoteSchema, daySchema, listNotesQuery, renameNoteSchema, saveEntrySchema } from "@/shared/schemas";
+import { createNoteSchema, daySchema, listNotesQuery, renameNoteSchema, saveEntrySchema, timelineQuery } from "@/shared/schemas";
 import { LIMITS } from "@/shared/limits";
 import { json } from "./respond";
 import { body, query, safe, validId, writer, type Handler } from "./kit";
@@ -15,7 +15,7 @@ export const listNotesH: Handler = safe(async (req, deps) => {
   const u = await requireUser(req, deps);
   const q = listNotesQuery.parse(query(req));
   if (q.q) await deps.limiter.hit("search", u.identity.uid, RULES.search);
-  return json(200, await listNotes(deps.db, u.identity.uid, q));
+  return json(200, await listNotes(deps.db, u.identity.uid, { cursor: q.cursor, q: q.q, count: q.count === "1" }));
 });
 
 export const writeTargetH: Handler = safe(async (req, deps) => {
@@ -67,4 +67,16 @@ export const saveEntryH: Handler = safe(async (req, deps, p) => {
 export const deleteEntryH: Handler = safe(async (req, deps, p) => {
   const u = await writer(req, deps);
   return json(200, { note: await deleteEntry(deps.db, u.identity.uid, validId(p["id"]), parseDay(p["day"]), deps.now()) });
+});
+
+/** Home → Overview: personal totals, streak and the five most recent notes. */
+export const overviewH: Handler = safe(async (req, deps) => {
+  const u = await requireUser(req, deps);
+  return json(200, await overview(deps.db, u.identity.uid, todayFor(u.profile.settings.timeZone, deps.now())));
+});
+
+/** Home → Notes: every dated entry across all notes, newest day first. */
+export const timelineH: Handler = safe(async (req, deps) => {
+  const u = await requireUser(req, deps);
+  return json(200, await timeline(deps.db, u.identity.uid, timelineQuery.parse(query(req)).cursor));
 });

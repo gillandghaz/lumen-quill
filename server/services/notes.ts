@@ -1,8 +1,9 @@
 import { randomBytes } from "node:crypto";
-import type { Firestore } from "../firebase";
+import { AggregateField, type Firestore } from "../firebase";
 import { COLLECTIONS } from "../config";
 import { HttpError } from "../errors";
-import { LIMITS } from "@/shared/limits";
+import { LIMITS, NOTES_PAGE_SIZE, TIMELINE_PAGE_SIZE } from "@/shared/limits";
+import { recordActivity } from "./activity";
 import { byteLength, preview, wordCount } from "@/shared/text";
 import { dayKey } from "@/shared/day";
 import type { PortableNote } from "@/shared/markdown-io";
@@ -63,9 +64,9 @@ export function todayFor(timeZone: string, now: number): string {
   return dayKey(now, timeZone);
 }
 
-const PAGE = 30;
+const PAGE = NOTES_PAGE_SIZE;
 
-export async function listNotes(db: Firestore, uid: string, opts: { cursor?: string; q?: string }): Promise<{ items: NoteMeta[]; nextCursor: string | null }> {
+export async function listNotes(db: Firestore, uid: string, opts: { cursor?: string; q?: string; count?: boolean }): Promise<{ items: NoteMeta[]; nextCursor: string | null; total?: number }> {
   if (opts.q && opts.q.trim()) {
     // Title / preview search over the user's most recent notes (bounded scan; caller rate-limits it).
     const needle = opts.q.trim().toLowerCase();
@@ -82,7 +83,9 @@ export async function listNotes(db: Firestore, uid: string, opts: { cursor?: str
   const snap = await q.get();
   const docs = snap.docs.slice(0, PAGE);
   const items = docs.map((d) => toMeta(d.id, d.data() as NoteDoc));
-  return { items, nextCursor: snap.docs.length > PAGE && items.length ? String(items[items.length - 1]!.updatedAt) : null };
+  // The total (for "page x of y") is a cheap aggregation, asked for only on the first page.
+  const total = opts.count ? (await notes(db).where("ownerUid", "==", uid).count().get()).data().count : undefined;
+  return { items, nextCursor: snap.docs.length > PAGE && items.length ? String(items[items.length - 1]!.updatedAt) : null, ...(total !== undefined ? { total } : {}) };
 }
 
 /** The note "Write" should open, and today's date for this user. */
@@ -115,6 +118,7 @@ export async function createNote(db: Firestore, uid: string, title: string | und
     preview: "",
   };
   await notes(db).doc(id).create(doc);
+  await recordActivity(db, dayKey(now, "UTC"), { notes: 1 });
   return toMeta(id, doc);
 }
 
@@ -154,7 +158,9 @@ export async function saveEntry(
 ): Promise<{ entry: Entry | null; note: NoteMeta }> {
   const noteRef = notes(db).doc(noteId);
   const entryRef = entries(db, noteId).doc(day);
-  return db.runTransaction(async (tx) => {
+  let delta: { words: number; created: boolean } | null = null;
+  const result = await db.runTransaction(async (tx) => {
+    delta = null;
     const [ns, es] = await Promise.all([tx.get(noteRef), tx.get(entryRef)]);
     const n = ns.data() as NoteDoc | undefined;
     if (!ns.exists || !n || n.ownerUid !== uid) throw new HttpError(404, "not_found");
@@ -168,6 +174,7 @@ export async function saveEntry(
 
     const words = wordCount(body);
     const bytes = byteLength(body);
+    delta = { words: words - (prev?.words ?? 0), created: !prev };
     const entry: Entry = { day, body, words, createdAt: prev?.createdAt ?? now, updatedAt: now };
     tx.set(entryRef, { ...entry, bytes, ownerUid: uid, noteId });
 
@@ -185,6 +192,9 @@ export async function saveEntry(
     tx.set(noteRef, next);
     return { entry, note: toMeta(noteId, next) };
   });
+  const d = delta as { words: number; created: boolean } | null;
+  if (d) await recordActivity(db, day, { saves: 1, newEntries: d.created ? 1 : 0, words: d.words });
+  return result;
 }
 
 export async function deleteEntry(db: Firestore, uid: string, noteId: string, day: string, now: number): Promise<NoteMeta> {
@@ -285,5 +295,71 @@ export async function importNotes(db: Firestore, uid: string, list: PortableNote
     if (ops > 0) await batch.commit();
     entryTotal += sorted.length;
   }
+  await recordActivity(db, dayKey(now, "UTC"), { notes: list.length, newEntries: entryTotal });
   return { notes: list.length, entries: entryTotal };
+}
+
+export interface TimelineItem { noteId: string; noteTitle: string; day: string; words: number; preview: string; updatedAt: number }
+
+/**
+ * Timeline: every dated entry of the user, newest day first, across all notes (one collection-group query,
+ * TIMELINE_PAGE_SIZE per page, plus one batched read for the note titles).
+ */
+export async function timeline(db: Firestore, uid: string, cursor?: string): Promise<{ items: TimelineItem[]; nextCursor: string | null }> {
+  let q = db.collectionGroup(COLLECTIONS.entries).where("ownerUid", "==", uid).orderBy("day", "desc").orderBy("updatedAt", "desc").limit(TIMELINE_PAGE_SIZE + 1);
+  if (cursor) {
+    const [day, at] = cursor.split("|");
+    if (!day || !/^\d{4}-\d{2}-\d{2}$/.test(day) || !Number.isFinite(Number(at))) throw new HttpError(400, "bad_request");
+    q = q.startAfter(day, Number(at));
+  }
+  const snap = await q.get();
+  const docs = snap.docs.slice(0, TIMELINE_PAGE_SIZE);
+  const ids = [...new Set(docs.map((d) => d.get("noteId") as string))];
+  const titles = new Map<string, string>();
+  if (ids.length) {
+    const refs = ids.map((id) => notes(db).doc(id));
+    for (const n of await db.getAll(...refs)) if (n.exists && n.get("ownerUid") === uid) titles.set(n.id, n.get("title") as string);
+  }
+  const items = docs
+    .filter((d) => titles.has(d.get("noteId") as string))
+    .map((d) => ({
+      noteId: d.get("noteId") as string,
+      noteTitle: titles.get(d.get("noteId") as string) ?? "",
+      day: d.get("day") as string,
+      words: (d.get("words") as number) ?? 0,
+      preview: preview(d.get("body") as string, 180),
+      updatedAt: d.get("updatedAt") as number,
+    }));
+  const last = docs[docs.length - 1];
+  return { items, nextCursor: snap.docs.length > TIMELINE_PAGE_SIZE && last ? `${last.get("day")}|${last.get("updatedAt")}` : null };
+}
+
+/** Overview numbers for one user: aggregations (cheap) plus the last 60 written days for the streak. */
+export async function overview(db: Firestore, uid: string, today: string) {
+  const mine = notes(db).where("ownerUid", "==", uid);
+  // Two separate sums: each is served by its own (ownerUid, field) index; one combined sum would need another index.
+  const [count, wordsSum, daysSum, recent, days] = await Promise.all([
+    mine.count().get(),
+    mine.aggregate({ words: AggregateField.sum("words") }).get(),
+    mine.aggregate({ days: AggregateField.sum("entryCount") }).get(),
+    mine.orderBy("updatedAt", "desc").limit(5).get(),
+    db.collectionGroup(COLLECTIONS.entries).where("ownerUid", "==", uid).orderBy("day", "desc").orderBy("updatedAt", "desc").select("day").limit(60).get(),
+  ]);
+  const written = new Set(days.docs.map((d) => d.get("day") as string));
+  let streak = 0;
+  for (let t = Date.parse(`${today}T00:00:00Z`); ; t -= 86_400_000) {
+    const k = new Date(t).toISOString().slice(0, 10);
+    if (written.has(k)) streak++;
+    else if (k !== today) break;
+    if (streak > 59) break;
+  }
+  return {
+    today,
+    writtenToday: written.has(today),
+    notes: count.data().count,
+    words: Number(wordsSum.data().words ?? 0),
+    days: Number(daysSum.data().days ?? 0),
+    streak,
+    recent: recent.docs.map((d) => toMeta(d.id, d.data() as NoteDoc)),
+  };
 }

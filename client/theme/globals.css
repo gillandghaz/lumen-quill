@@ -158,7 +158,10 @@ h2 { font-size: 1.35rem; }
 h3 { font-size: 1.1rem; }
 p { margin: 0 0 1em; }
 a { color: var(--accent-2); text-underline-offset: 3px; }
-[data-mode="sonata"] a { color: var(--accent-2); }
+/* Buttons rendered as links keep their own colours (the gold Sign in button had cyan link text in Sonata). */
+a.btn { color: var(--text); text-decoration: none; }
+a.btn-primary { color: var(--accent-ink); }
+a.btn-danger { color: var(--danger); }
 .muted { color: var(--muted); }
 .faint { color: var(--faint); }
 .mono { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; }
@@ -369,10 +372,15 @@ a { color: var(--accent-2); text-underline-offset: 3px; }
   line-height: 1.75;
 }
 .editor:focus { outline: none; border-color: var(--accent); }
+/* Ruled page. The rules start at the CONTENT box (after the padding) and repeat every line-height (1.75em of the
+   textarea's own font size), so each line of text sits exactly on its rule, at any text size, while scrolling too. */
 [data-mode="palace"] .editor {
-  background:
-    repeating-linear-gradient(180deg, transparent 0 calc(1.75em - 1px), rgba(27, 33, 64, 0.07) calc(1.75em - 1px) 1.75em),
-    var(--panel-solid);
+  line-height: 1.75em;
+  padding: 0.6em 1.1rem;
+  background-color: var(--panel-solid);
+  background-image: repeating-linear-gradient(180deg, transparent 0, transparent calc(1.75em - 1px), rgba(27, 33, 64, 0.14) calc(1.75em - 1px), rgba(27, 33, 64, 0.14) 1.75em);
+  background-origin: content-box;
+  background-clip: padding-box;
   background-attachment: local;
 }
 .entry-read { padding: 0.25rem 0; font-family: var(--font-editor); font-size: calc(var(--editor-size) * var(--font-scale, 1)); }

@@ -13,7 +13,7 @@ A private, invitation-only archive of dated notes. Two display modes:
 - **Write today** on the same day → continues the latest note.
 - **Write today** on a later day → by default asks: *continue* (adds today's section to the latest note) or *start a new note*. Settings can make either choice automatic.
 - **New note** always creates a separate note.
-- Typing autosaves (debounced), retries offline, flushes when you leave, and refuses to overwrite a newer version from another tab.
+- Typing autosaves (debounced) with a visible status (*Saving…* → *All changes saved*), retries offline, refuses to overwrite a newer version from another tab, and the browser asks before you leave while a save is still pending.
 
 ## Export / import
 
@@ -49,18 +49,28 @@ Layer boundaries are enforced by ESLint (e.g. the Admin SDK may only be imported
 
 ## Accounts
 
-There is **no public sign-up**. Exactly one administrator (`gillandghaz`) is created with:
+There is **no public sign-up**. Exactly one administrator is created (from `ADMIN_EMAIL` / `ADMIN_USERNAME` in the secrets file) with:
 
 ```
 node --env-file=<secrets file outside the repo> scripts/bootstrap-admin.mjs
 ```
 
-The admin creates every other account in **Admin → Accounts** and manages security, backups and statistics there. Every account has Archive, Account, Settings and Data.
+The admin creates every other account in **Settings → Admin → Accounts** and manages security, the audit log, retention, backups and statistics there.
+
+## Layout
+
+- **Top bar** (fixed): brand on the left, profile photo on the right → *Home*, *Settings*, *Sign out*.
+- **Home** (`/home`): *Overview* (today, totals, streak, recent notes), *Notes* (every dated entry, newest first), *Archive* (the list of notes, 15 per page). Which tab opens first is a preference.
+- **Settings** (`/settings`): *Account* (photo, unique username, password reset link or create a password, sessions), *Preferences*, *Data* (export / import / delete all), *Admin* (admin only).
+- Signed-in visitors of `/` or `/login` go straight to Home; signed-out visitors of any app page go to sign-in.
 
 ## Development
 
+Every change goes through a branch and a pull request; see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ```
 npm ci
+git config core.hooksPath scripts/hooks
 node --env-file=<secrets file> scripts/with-env.mjs dev
 npm run lint && npm run typecheck && npm test && npm run build && npm run audit:deps
 ```

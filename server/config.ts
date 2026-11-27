@@ -16,6 +16,10 @@ export const COLLECTIONS = {
   entries: "entries",
   audit: "auditLogs",
   rateLimits: "rateLimits",
+  avatars: "avatars",
+  /** Daily activity counters (activity/{YYYY-MM-DD}) that feed Statistics without scanning notes. */
+  activity: "activity",
+  appSettings: "appSettings",
 } as const;
 
 export interface AppConfig {

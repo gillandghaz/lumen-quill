@@ -15,13 +15,23 @@ function app(): App {
   return initializeApp({ credential: cert({ projectId, clientEmail, privateKey }), projectId });
 }
 
-let db: Firestore | null = null;
+/**
+ * One Firestore instance per process. Next.js may bundle this module separately for pages and API routes, while
+ * firebase-admin's app and Firestore instance are shared process-wide. settings() may only be called once per
+ * instance, so the configured instance is kept on globalThis and every bundle reuses it.
+ */
+const G = globalThis as typeof globalThis & { __lumenQuillDb?: Firestore };
 export function firestore(): Firestore {
-  if (!db) {
-    db = getFirestore(app());
-    db.settings({ ignoreUndefinedProperties: true });
+  if (!G.__lumenQuillDb) {
+    const db = getFirestore(app());
+    try {
+      db.settings({ ignoreUndefinedProperties: true });
+    } catch {
+      /* already configured by another bundle in this process */
+    }
+    G.__lumenQuillDb = db;
   }
-  return db;
+  return G.__lumenQuillDb;
 }
 
 export function adminAuth(): Auth {

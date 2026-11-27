@@ -1,1 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#070912"/><circle cx="16" cy="16" r="12.5" fill="none" stroke="#e9c983" stroke-opacity=".5"/><path d="M16 5 L21.5 16 L16 27 L10.5 16 Z" fill="none" stroke="#e9c983" stroke-width="1.3"/><path d="M16 10.5 L18.7 16 L16 21.5 L13.3 16 Z" fill="#8fdcf2"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="sky" cx="38%" cy="30%" r="75%">
+      <stop offset="0" stop-color="#1d2a4d"/>
+      <stop offset="0.6" stop-color="#0c1224"/>
+      <stop offset="1" stop-color="#070912"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7e3b0"/>
+      <stop offset="1" stop-color="#c99a4a"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="31" fill="url(#sky)"/>
+  <circle cx="32" cy="32" r="28.5" fill="none" stroke="url(#gold)" stroke-width="1.6"/>
+  <circle cx="32" cy="32" r="25" fill="none" stroke="#e9c983" stroke-opacity=".22" stroke-width="0.8"/>
+  <!-- quill nib -->
+  <path d="M32 12 C38.5 21 41 28 41 34 C41 40 37 45 32 52 C27 45 23 40 23 34 C23 28 25.5 21 32 12 Z" fill="url(#gold)"/>
+  <path d="M32 21 L32 41" stroke="#0c1224" stroke-width="1.6" stroke-linecap="round"/>
+  <circle cx="32" cy="41.5" r="2.4" fill="#0c1224"/>
+  <!-- a small star -->
+  <path d="M47 17 L48 19.6 L50.6 20.6 L48 21.6 L47 24.2 L46 21.6 L43.4 20.6 L46 19.6 Z" fill="#8fdcf2"/>
+</svg>

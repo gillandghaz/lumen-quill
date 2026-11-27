@@ -2,8 +2,10 @@ import { HttpError } from "../errors";
 import { requireAdmin } from "../session";
 import { RULES } from "../security/rate-limit";
 import { backupPage, createUser, deleteUser, listAudit, listUsers, revokeEveryone, revokeUser, securityStatus, setDisabled, stats } from "../services/admin";
-import { adminCreateUserSchema, adminUpdateUserSchema, auditQuery, confirmSchema } from "@/shared/schemas";
-import { z } from "zod";
+import { adminCreateUserSchema, adminUpdateUserSchema, auditQuery, backupQuery, confirmSchema, retentionSchema } from "@/shared/schemas";
+import { getRetention, setRetention } from "../services/app-settings";
+import { purgeExpired } from "../services/retention";
+import { writeAudit } from "../services/audit";
 import { json } from "./respond";
 import { body, query, safe, validUid, writer, type Handler } from "./kit";
 
@@ -62,10 +64,22 @@ export const securityH: Handler = safe(async (req, deps) => {
   return json(200, await securityStatus(deps));
 });
 
-const backupQuery = z.object({ cursor: z.string().max(40).optional() }).strict();
-
 export const backupH: Handler = safe(async (req, deps) => {
   const a = await requireAdmin(req, deps);
   await deps.limiter.hit("backup", a.identity.uid, RULES.backup);
-  return json(200, await backupPage(deps, a, backupQuery.parse(query(req)).cursor));
+  return json(200, await backupPage(deps, a, backupQuery.parse(query(req))));
+});
+
+export const getRetentionH: Handler = safe(async (req, deps) => {
+  await requireAdmin(req, deps);
+  return json(200, await getRetention(deps.db));
+});
+
+/** Change how long Statistics (activity) and Audit log data are kept; old data is purged right away. */
+export const putRetentionH: Handler = safe(async (req, deps) => {
+  const a = await writer(req, deps, "adminChange", true);
+  const next = await setRetention(deps.db, retentionSchema.parse(await body(req, 256)));
+  await writeAudit(deps.db, { action: "admin.retention", actorUid: a.identity.uid, details: { statsDays: next.statsDays, auditDays: next.auditDays } }, deps.now());
+  const purged = await purgeExpired(deps.db, deps.now());
+  return json(200, { ...next, purged });
 });

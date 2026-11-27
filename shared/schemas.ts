@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { LIMITS, MODES, NEXT_DAY } from "./limits";
+import { AVATAR_MAX_CHARS, HOME_TABS, LIMITS, MODES, NEXT_DAY } from "./limits";
 import { isValidDay, isValidTimeZone } from "./day";
 import { byteLength, cleanTitle } from "./text";
 
@@ -21,13 +21,15 @@ export const saveEntrySchema = z.object({
   /** updatedAt the editor last saw; a newer stored version means another tab wrote in between (409). */
   baseUpdatedAt: z.number().int().nonnegative().nullable().optional(),
 }).strict();
-export const listNotesQuery = z.object({ cursor: z.string().max(200).optional(), q: z.string().max(100).optional() }).strict();
+export const listNotesQuery = z.object({ cursor: z.string().max(200).optional(), q: z.string().max(100).optional(), count: z.enum(["1"]).optional() }).strict();
+export const timelineQuery = z.object({ cursor: z.string().max(40).optional() }).strict();
 
 export const settingsSchema = z.object({
   mode: z.enum(MODES).optional(),
   timeZone: timeZoneSchema.optional(),
   nextDay: z.enum(NEXT_DAY).optional(),
   fontScale: z.number().min(0.85).max(1.3).optional(),
+  homeTab: z.enum(HOME_TABS).optional(),
 }).strict();
 
 export const usernameSchema = z.string().min(LIMITS.usernameMin).max(LIMITS.usernameMax).regex(/^[a-z0-9](?:[a-z0-9_.]*[a-z0-9])?$/, "username_invalid");
@@ -54,3 +56,19 @@ export const adminCreateUserSchema = z.object({
 }).strict();
 export const adminUpdateUserSchema = z.object({ disabled: z.boolean() }).strict();
 export const auditQuery = z.object({ cursor: z.string().max(200).optional() }).strict();
+
+const retention = z.union([z.literal(1), z.literal(3), z.literal(7), z.literal(30)]);
+export const retentionSchema = z.object({ statsDays: retention.optional(), auditDays: retention.optional() }).strict();
+
+/** A square JPEG produced in the browser (256 px), as a data URL; re-checked on the server. */
+export const avatarSchema = z.object({
+  image: z.string().max(AVATAR_MAX_CHARS).regex(/^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/),
+}).strict();
+
+export const backupQuery = z.object({
+  cursor: z.string().max(40).optional(),
+  from: daySchema.optional(),
+  to: daySchema.optional(),
+}).strict();
+
+export const passwordCreateSchema = z.object({ password: z.string().min(LIMITS.passwordMin).max(LIMITS.passwordMax) }).strict();

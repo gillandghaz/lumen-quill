@@ -81,7 +81,7 @@ describe("schemas", () => {
     expect(saveEntrySchema.safeParse({ body: "é".repeat(LIMITS.entryBytes / 2 + 1) }).success).toBe(false);
   });
   it("normalise and validate usernames", () => {
-    expect(profileSchema.parse({ username: "  GillandGhaz " }).username).toBe("gillandghaz");
+    expect(profileSchema.parse({ username: "  QuillWriter " }).username).toBe("quillwriter");
     expect(profileSchema.safeParse({ username: "a" }).success).toBe(false);
     expect(profileSchema.safeParse({ username: "bad name" }).success).toBe(false);
     expect(profileSchema.safeParse({ username: "_edge" }).success).toBe(false);

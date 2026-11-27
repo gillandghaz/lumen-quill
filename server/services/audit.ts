@@ -2,8 +2,8 @@ import type { Firestore } from "../firebase";
 import { Timestamp } from "../firebase";
 import { COLLECTIONS } from "../config";
 
-/** Audit entries keep 180 days (`expiresAt`, removed by the daily cron). Only ids, codes and counts: never note text or e-mail. */
-const AUDIT_TTL_MS = 180 * 24 * 60 * 60 * 1000;
+/** Audit entries are kept for the admin's audit retention (1/3/7/30 days, removed by the daily cron). Only ids, codes and counts: never note text or e-mail. */
+const AUDIT_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 export type AuditAction =
   | "auth.login"
@@ -20,7 +20,8 @@ export type AuditAction =
   | "admin.user_revoke"
   | "admin.user_delete"
   | "admin.backup"
-  | "admin.revoke_all";
+  | "admin.revoke_all"
+  | "admin.retention";
 
 export interface AuditEntry {
   action: AuditAction;
