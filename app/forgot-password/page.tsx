@@ -8,7 +8,7 @@ export default function ForgotPage() {
   return (
     <>
       <header className="landing-top">
-        <Link href="/" className="brand"><BrandMark />Lumine Archive</Link>
+        <Link href="/" className="brand"><BrandMark />Lumen Quill</Link>
       </header>
       <main id="main" className="auth-wrap">
         <div className="panel auth-card">

@@ -13,11 +13,11 @@ import { LIMITS } from "./limits";
  *   ## 2026-11-27
  *   ...
  *
- * Several notes in one file are separated by a line containing exactly `<!-- lumine:note -->`.
+ * Several notes in one file are separated by a line containing exactly `<!-- lumen:note -->`.
  * Text before the first date heading (e.g. a plain file from elsewhere) is imported as an entry dated `fallbackDay`.
  * Body lines that would be mistaken for our headings are escaped with a leading backslash, so a round trip is lossless.
  */
-export const NOTE_SEPARATOR = "<!-- lumine:note -->";
+export const NOTE_SEPARATOR = "<!-- lumen:note -->";
 const DAY_HEADING = /^##\s+(\d{4}-\d{2}-\d{2})\s*$/;
 const TITLE_HEADING = /^#\s+/;
 

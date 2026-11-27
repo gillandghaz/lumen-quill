@@ -1,6 +1,6 @@
 # Security
 
-> Applies to: **lumine-archive** (private repository). Supported version: **the latest release on `main` only**.
+> Applies to: **lumen-quill** (private repository). Supported version: **the latest release on `main` only**.
 
 ## Reporting a vulnerability
 

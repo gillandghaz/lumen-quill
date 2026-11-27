@@ -13,7 +13,7 @@ export default async function Landing() {
   return (
     <>
       <header className="landing-top">
-        <Link href="/" className="brand"><BrandMark />Lumine Archive</Link>
+        <Link href="/" className="brand"><BrandMark />Lumen Quill</Link>
         <Link className="btn btn-primary" href={signedIn ? "/archive" : "/login"}>{signedIn ? "Open archive" : "Sign in"}</Link>
       </header>
 
@@ -23,7 +23,7 @@ export default async function Landing() {
             <p className="label glyph">A private archive for your days</p>
             <h1>Write today.<br />Keep it forever.</h1>
             <p className="lead">
-              Lumine Archive keeps your notes by the day you wrote them. Return the same day and you simply carry on;
+              Lumen Quill keeps your notes by the day you wrote them. Return the same day and you simply carry on;
               come back tomorrow and choose to continue the story or begin a new one.
             </p>
             <div className="btn-row">
@@ -54,7 +54,7 @@ export default async function Landing() {
       </main>
 
       <footer className="footer">
-        <span>© 2026 Lumine Archive</span>
+        <span>© 2026 Lumen Quill</span>
         <span>Sonata · Palace</span>
       </footer>
     </>

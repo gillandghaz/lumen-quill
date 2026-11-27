@@ -1,10 +1,10 @@
 {
-  "name": "lumine-archive",
+  "name": "lumen-quill",
   "version": "0.1.0",
   "private": true,
   "license": "UNLICENSED",
   "type": "module",
-  "description": "Lumine Archive: a private, dated note archive (Next.js, Firebase Auth + Firestore, Vercel)",
+  "description": "Lumen Quill: a private, dated note archive (Next.js, Firebase Auth + Firestore, Vercel)",
   "engines": {
     "node": "24.x"
   },

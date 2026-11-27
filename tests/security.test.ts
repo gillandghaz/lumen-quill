@@ -8,7 +8,7 @@ import { loadConfig, sessionCookieName } from "@/server/config";
 import { clientIp } from "@/server/security/client-ip";
 import { buildCsp } from "../proxy";
 
-const ORIGIN = "https://lumine-archive.vercel.app";
+const ORIGIN = "https://lumen-quill.vercel.app";
 const req = (method: string, headers: Record<string, string> = {}, body?: string) => new Request(`${ORIGIN}/api/x`, { method, headers, body });
 
 describe("CSRF", () => {

@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// Lumine Archive: Firestore is reached ONLY by the server (Admin SDK, which bypasses rules).
+// Lumen Quill: Firestore is reached ONLY by the server (Admin SDK, which bypasses rules).
 // Browsers never talk to Firestore directly, so every client read/write is denied.
 service cloud.firestore {
   match /databases/{database}/documents {

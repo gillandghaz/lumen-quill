@@ -15,7 +15,7 @@ export const exportH: Handler = safe(async (req, deps) => {
   await deps.limiter.hit("export", u.identity.uid, RULES.export);
   const { format, noteId } = exportQuery.parse(query(req));
   const list = await allNotesPortable(deps.db, u.identity.uid, noteId);
-  const name = noteId && list[0] ? fileNameFor(list[0].title, format) : `lumine-archive-${todayFor(u.profile.settings.timeZone, deps.now())}.${format}`;
+  const name = noteId && list[0] ? fileNameFor(list[0].title, format) : `lumen-quill-${todayFor(u.profile.settings.timeZone, deps.now())}.${format}`;
   return download(serializeNotes(list), name, format === "md" ? "text/markdown" : "text/plain");
 });
 
