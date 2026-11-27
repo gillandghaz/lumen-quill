@@ -70,22 +70,23 @@ export async function listNotes(db: Firestore, uid: string, opts: { cursor?: str
   if (opts.q && opts.q.trim()) {
     // Title / preview search over the user's most recent notes (bounded scan; caller rate-limits it).
     const needle = opts.q.trim().toLowerCase();
-    const snap = await notes(db).where("ownerUid", "==", uid).orderBy("updatedAt", "desc").limit(500).get();
+    const snap = await notes(db).where("ownerUid", "==", uid).orderBy("createdAt", "desc").limit(500).get();
     const items = snap.docs.map((d) => toMeta(d.id, d.data() as NoteDoc)).filter((n) => n.title.toLowerCase().includes(needle) || n.preview.toLowerCase().includes(needle));
     return { items: items.slice(0, 100), nextCursor: null };
   }
-  let q = notes(db).where("ownerUid", "==", uid).orderBy("updatedAt", "desc").limit(PAGE + 1);
+  // Archive order: when a note was created (first written), newest first. Editing never reshuffles the list.
+  let q = notes(db).where("ownerUid", "==", uid).orderBy("createdAt", "desc").orderBy("__name__", "desc").limit(PAGE + 1);
   if (opts.cursor) {
-    const at = Number(opts.cursor);
-    if (!Number.isFinite(at) || at < 0) throw new HttpError(400, "bad_request");
-    q = q.startAfter(at);
+    const [at, lastId] = opts.cursor.split("|");
+    if (!Number.isFinite(Number(at)) || Number(at) < 0 || !lastId || !/^[A-Za-z0-9_-]{16,64}$/.test(lastId)) throw new HttpError(400, "bad_request");
+    q = q.startAfter(Number(at), lastId);
   }
   const snap = await q.get();
   const docs = snap.docs.slice(0, PAGE);
   const items = docs.map((d) => toMeta(d.id, d.data() as NoteDoc));
   // The total (for "page x of y") is a cheap aggregation, asked for only on the first page.
   const total = opts.count ? (await notes(db).where("ownerUid", "==", uid).count().get()).data().count : undefined;
-  return { items, nextCursor: snap.docs.length > PAGE && items.length ? String(items[items.length - 1]!.updatedAt) : null, ...(total !== undefined ? { total } : {}) };
+  return { items, nextCursor: snap.docs.length > PAGE && items.length ? `${items[items.length - 1]!.createdAt}|${items[items.length - 1]!.id}` : null, ...(total !== undefined ? { total } : {}) };
 }
 
 /** The note "Write" should open, and today's date for this user. */
@@ -141,8 +142,9 @@ export async function renameNote(db: Firestore, uid: string, noteId: string, tit
 
 /**
  * Save one day's text. Rules:
- * - Writing is only allowed into TODAY (creating it on first save) or into a day that already exists (editing).
- *   The server decides what "today" is from the user's time zone; the client cannot invent dates.
+ * - Writing is only allowed into TODAY (creating it on first save). Earlier days are locked: they can be read or
+ *   deleted, never edited (to change one, export, edit elsewhere and import as a new note).
+ *   The server decides what "today" is from the user's time zone; the client cannot invent or reopen dates.
  * - `baseUpdatedAt` guards against two tabs overwriting each other: a newer stored version answers 409.
  * - Note aggregates (word count, preview, first/last day) are updated in the same transaction.
  */
@@ -165,7 +167,7 @@ export async function saveEntry(
     const n = ns.data() as NoteDoc | undefined;
     if (!ns.exists || !n || n.ownerUid !== uid) throw new HttpError(404, "not_found");
     const prev = es.exists ? (es.data() as Entry & { bytes?: number }) : null;
-    if (!prev && day !== today) throw new HttpError(404, "not_found");
+    if (day !== today) throw new HttpError(prev ? 403 : 404, prev ? "day_locked" : "not_found");
     if (prev && typeof baseUpdatedAt === "number" && prev.updatedAt > baseUpdatedAt) {
       throw new HttpError(409, "conflict", { public: { updatedAt: prev.updatedAt } });
     }
@@ -342,7 +344,7 @@ export async function overview(db: Firestore, uid: string, today: string) {
     mine.count().get(),
     mine.aggregate({ words: AggregateField.sum("words") }).get(),
     mine.aggregate({ days: AggregateField.sum("entryCount") }).get(),
-    mine.orderBy("updatedAt", "desc").limit(5).get(),
+    mine.orderBy("createdAt", "desc").limit(5).get(),
     db.collectionGroup(COLLECTIONS.entries).where("ownerUid", "==", uid).orderBy("day", "desc").orderBy("updatedAt", "desc").select("day").limit(60).get(),
   ]);
   const written = new Set(days.docs.map((d) => d.get("day") as string));

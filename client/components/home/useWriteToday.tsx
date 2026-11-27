@@ -9,6 +9,7 @@ import type { NextDayBehavior } from "@/shared/limits";
 export interface NoteMeta {
   id: string;
   title: string;
+  createdAt: number;
   updatedAt: number;
   firstDay: string | null;
   lastDay: string | null;
@@ -43,7 +44,9 @@ export function useWriteToday(onError: (msg: string) => void) {
     try {
       const t = await api<Target>("/api/notes/write-target");
       if (!t.latest) return void (await newNote());
-      if (t.writtenToday || t.nextDay === "continue") return router.push(`/notes/${t.latest.id}`);
+      // Same day: the only choice is to carry on. A later day: continue (new section) or a new note.
+      if (t.writtenToday) return router.push(`/notes/${t.latest.id}`);
+      if (t.nextDay === "continue") return router.push(`/notes/${t.latest.id}?continue=1`);
       if (t.nextDay === "new") return void (await newNote());
       setAsk(t);
       setBusy(false);
@@ -60,9 +63,9 @@ export function useWriteToday(onError: (msg: string) => void) {
         <h2 id="ask-title">Continue or begin anew?</h2>
         <p className="muted">Your latest note, <strong>{ask.latest.title}</strong>, was last written on {ask.latest.lastDay ? shortDayLabel(ask.latest.lastDay) : "an earlier day"}.</p>
         <div className="choice-grid">
-          <button className="choice" type="button" onClick={() => router.push(`/notes/${ask.latest!.id}`)}>
+          <button className="choice" type="button" onClick={() => router.push(`/notes/${ask.latest!.id}?continue=1`)}>
             <strong>Continue “{ask.latest.title}”</strong>
-            <span className="muted">Adds a new section dated today to the same note.</span>
+            <span className="muted">Adds a section for today below the earlier days, which stay locked.</span>
           </button>
           <button className="choice" type="button" onClick={() => { setAsk(null); void newNote(); }}>
             <strong>Start a new note</strong>

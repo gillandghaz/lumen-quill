@@ -3,15 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { api, errorText } from "@/client/lib/api";
-import { shortDayLabel } from "@/shared/day";
 import { NOTES_PAGE_SIZE } from "@/shared/limits";
 import { Pagination } from "../Pagination";
 import { SkeletonRows } from "./OverviewTab";
 import type { NoteMeta } from "./useWriteToday";
 
 /**
- * Archive: the list of notes, most recently written first. Rows are two lines tall (title + latest line),
- * so a page holds NOTES_PAGE_SIZE (15) notes; the total comes from one cheap count on the first page.
+ * Archive: the list of notes in the order they were created (newest first; editing never reshuffles it). Rows show
+ * only the title and facts, no content, so a page holds NOTES_PAGE_SIZE (20); the total is one cheap count.
  */
 export function ArchiveTab({ onWrite }: { onWrite: () => void }) {
   const [items, setItems] = useState<NoteMeta[] | null>(null);
@@ -68,7 +67,7 @@ export function ArchiveTab({ onWrite }: { onWrite: () => void }) {
         }}
       >
         <label className="sr-only" htmlFor="q">Search notes</label>
-        <input id="q" className="input" type="search" placeholder="Search titles and latest lines…" maxLength={100} value={q} onChange={(e) => {
+        <input id="q" className="input" type="search" placeholder="Search titles…" maxLength={100} value={q} onChange={(e) => {
           setQ(e.target.value);
           if (e.target.value === "" && searching) {
             setSearching(false);
@@ -93,8 +92,7 @@ export function ArchiveTab({ onWrite }: { onWrite: () => void }) {
           {items.map((n) => (
             <Link key={n.id} href={`/notes/${n.id}`} className="note-card">
               <span className="note-title trunc">{n.title}</span>
-              <span className="note-meta">{n.lastDay ? shortDayLabel(n.lastDay) : "empty"} · {n.entryCount} {n.entryCount === 1 ? "day" : "days"} · {n.words} words</span>
-              {n.preview && <span className="note-preview">{n.preview}</span>}
+              <span className="note-meta">created {new Date(n.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })} · {n.entryCount} {n.entryCount === 1 ? "day" : "days"} · {n.words} words</span>
             </Link>
           ))}
         </div>

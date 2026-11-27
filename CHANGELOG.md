@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.1 · 2026-11-28
+
+- **Writing flow.**
+  - Same day: "Write today" only continues the note. It opens on today's section with one new line and the cursor after the last character.
+  - A later day: continue (a new section for today below the earlier days) or start a new note.
+  - **Earlier days are locked.** The server refuses edits (`day_locked`). Locked days are shown read-only, sized to their text, and can still be deleted.
+  - An older note opened from the Archive is read-only, with a "Continue this note today" button.
+  - Today's box grows with its text.
+- **Archive.** Notes are ordered by when they were created, newest first, and editing no longer reshuffles them. Rows show the title and facts only (no content), 20 per page.
+- **Home.** Clicking Home (menu or brand) always returns to the "Open on" tab.
+- **Fixes.**
+  - Autosave no longer shifts the page (fixed-size status badge).
+  - Month labels in Notes no longer cover the timeline rail.
+  - Spacing under the backup range switch and under the username hint.
+
 ## 0.2.0 · 2026-11-28
 
 - **New layout.** Fixed top bar with the brand and a profile photo menu (Home, Settings, Sign out with confirmation).

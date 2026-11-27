@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { HomeTab } from "@/shared/limits";
 import { OverviewTab } from "./OverviewTab";
 import { NotesTab } from "./NotesTab";
@@ -17,6 +17,17 @@ export function Home({ username, initialTab }: { username: string; initialTab: H
   const [tab, setTab] = useState<HomeTab>(initialTab);
   const [error, setError] = useState<string | null>(null);
   const w = useWriteToday(setError);
+
+  // Home (profile menu or brand) while already here: back to the tab chosen under Preferences → Open on.
+  useEffect(() => {
+    const reset = () => {
+      setTab(initialTab);
+      window.history.replaceState(null, "", "/home");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    window.addEventListener("lq:home", reset);
+    return () => window.removeEventListener("lq:home", reset);
+  }, [initialTab]);
 
   function select(t: HomeTab) {
     setTab(t);

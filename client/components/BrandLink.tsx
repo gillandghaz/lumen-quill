@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BrandMark } from "./BrandMark";
-import { confirmLeave } from "@/client/lib/unsaved";
+import { confirmLeave, goHome } from "@/client/lib/unsaved";
 
 /** Brand in the top bar. Inside the app it guards unsaved notes before navigating. */
 export function BrandLink({ href = "/" }: { href?: string }) {
@@ -14,7 +14,8 @@ export function BrandLink({ href = "/" }: { href?: string }) {
       className="brand"
       onClick={(e) => {
         e.preventDefault();
-        if (confirmLeave()) router.push(href);
+        if (href === "/home") goHome(router);
+        else if (confirmLeave()) router.push(href);
       }}
     >
       <BrandMark />

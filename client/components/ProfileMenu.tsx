@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Avatar } from "./Avatar";
 import { ConfirmDialog } from "./Modal";
 import { logout } from "@/client/auth/actions";
-import { confirmLeave } from "@/client/lib/unsaved";
+import { confirmLeave, goHome } from "@/client/lib/unsaved";
 
 export interface MenuUser { uid: string; username: string; email: string; admin: boolean; avatarVersion: number | null }
 
@@ -54,7 +54,7 @@ export function ProfileMenu({ user }: { user: MenuUser }) {
           </div>
           {user.admin && <span className="badge">admin</span>}
         </div>
-        <button type="button" className="menu-item" role="menuitem" tabIndex={open ? 0 : -1} onClick={() => go("/home")}>Home</button>
+        <button type="button" className="menu-item" role="menuitem" tabIndex={open ? 0 : -1} onClick={() => { setOpen(false); goHome(router); }}>Home</button>
         <button type="button" className="menu-item" role="menuitem" tabIndex={open ? 0 : -1} onClick={() => go("/settings")}>Settings</button>
         <button type="button" className="menu-item menu-item-danger" role="menuitem" tabIndex={open ? 0 : -1} onClick={() => { setOpen(false); setConfirming(true); }}>Sign out</button>
       </div>
