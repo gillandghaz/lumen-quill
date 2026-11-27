@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Portal } from "../Portal";
 import { useRouter } from "next/navigation";
 import { api, errorText } from "@/client/lib/api";
 import { shortDayLabel } from "@/shared/day";
@@ -57,6 +58,7 @@ export function useWriteToday(onError: (msg: string) => void) {
   }
 
   const dialog = ask && ask.latest ? (
+    <Portal>
     <div className="modal-backdrop" role="presentation" onClick={() => setAsk(null)}>
       <div className="panel modal" role="dialog" aria-modal="true" aria-labelledby="ask-title" onClick={(e) => e.stopPropagation()}>
         <p className="label glyph">A new day · {shortDayLabel(ask.today)}</p>
@@ -75,6 +77,7 @@ export function useWriteToday(onError: (msg: string) => void) {
         <p className="hint" style={{ margin: "1rem 0 0" }}>You can make this automatic in Settings → Preferences.</p>
       </div>
     </div>
+    </Portal>
   ) : null;
 
   return { write, newNote, busy, dialog };

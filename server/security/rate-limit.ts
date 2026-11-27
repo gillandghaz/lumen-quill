@@ -40,7 +40,8 @@ export const RULES = {
   account: { limit: 10, windowMs: 60 * 60_000 },
   search: { limit: 120, windowMs: 10 * 60_000 },
   export: { limit: 60, windowMs: 10 * 60_000 },
-  import: { limit: 20, windowMs: 60 * 60_000 },
+  /** Import chunks (≤ 50 notes each): 400 per hour ≈ 20,000 notes, more than the daily Firestore write quota. */
+  import: { limit: 400, windowMs: 60 * 60_000 },
   destructive: { limit: 10, windowMs: 60 * 60_000 },
   adminChange: { limit: 60, windowMs: 10 * 60_000 },
   backup: { limit: 300, windowMs: 10 * 60_000 },

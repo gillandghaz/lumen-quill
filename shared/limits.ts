@@ -5,8 +5,12 @@ export const LIMITS = {
   entryBytes: 200_000,
   entriesPerNote: 1000,
   notesPerUser: 5000,
-  importFiles: 20,
-  importTotalBytes: 2_000_000,
+  /** One import session (checked in the browser): many files / a whole folder. */
+  importMaxFiles: 1000,
+  importMaxBytes: 50_000_000,
+  /** One request of an import (Vercel caps a request at ~4.5 MB): notes are sent in chunks. */
+  importChunkNotes: 50,
+  importChunkBytes: 1_500_000,
   usernameMin: 3,
   usernameMax: 24,
   passwordMin: 12,

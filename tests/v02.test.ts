@@ -43,3 +43,19 @@ describe("password creation", () => {
     expect(passwordCreateSchema.safeParse({ password: "a-long-enough-pass" }).success).toBe(true);
   });
 });
+
+describe("import fingerprint (duplicate detection)", async () => {
+  const { importHash } = await import("@/server/services/notes");
+  const a = { title: "Journal", entries: [{ day: "2026-11-01", body: "one" }, { day: "2026-11-02", body: "two" }] };
+  it("is the same for the same content, whatever the section order", () => {
+    expect(importHash(a)).toBe(importHash({ title: "Journal", entries: [...a.entries].reverse() }));
+  });
+  it("changes when the title, a date or a body changes", () => {
+    expect(importHash(a)).not.toBe(importHash({ ...a, title: "Journal 2" }));
+    expect(importHash(a)).not.toBe(importHash({ ...a, entries: [{ day: "2026-11-03", body: "one" }, a.entries[1]!] }));
+    expect(importHash(a)).not.toBe(importHash({ ...a, entries: [a.entries[0]!, { day: "2026-11-02", body: "two!" }] }));
+  });
+  it("cannot be confused by moving text between day and body", () => {
+    expect(importHash({ title: "T", entries: [{ day: "2026-11-01", body: "a" }] })).not.toBe(importHash({ title: "T2026-11-01", entries: [] }));
+  });
+});

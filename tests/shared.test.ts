@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { dayKey, dayLabel, isValidDay, isValidTimeZone } from "@/shared/day";
 import { fileNameFor, NOTE_SEPARATOR, parseNotes, serializeNote, serializeNotes } from "@/shared/markdown-io";
-import { adminCreateUserSchema, importSchema, profileSchema, saveEntrySchema, settingsSchema } from "@/shared/schemas";
+import { adminCreateUserSchema, importChunkSchema, profileSchema, saveEntrySchema, settingsSchema } from "@/shared/schemas";
 import { cleanText, preview, wordCount } from "@/shared/text";
 import { LIMITS } from "@/shared/limits";
 
@@ -94,9 +94,14 @@ describe("schemas", () => {
     expect(adminCreateUserSchema.safeParse({ email: "a@b.co", username: "abc", password: "short" }).success).toBe(false);
     expect(adminCreateUserSchema.safeParse({ email: "A@B.CO", username: "abc" }).data?.email).toBe("a@b.co");
   });
-  it("limit import size and count", () => {
-    expect(importSchema.safeParse({ files: Array.from({ length: LIMITS.importFiles + 1 }, () => ({ name: "a.md", text: "x" })) }).success).toBe(false);
-    expect(importSchema.safeParse({ files: [{ name: "a.md", text: "x".repeat(LIMITS.importTotalBytes + 1) }] }).success).toBe(false);
+  it("validate import chunks strictly", () => {
+    const note = { title: "T", entries: [{ day: "2026-11-01", body: "x" }] };
+    expect(importChunkSchema.safeParse({ notes: [note] }).success).toBe(true);
+    expect(importChunkSchema.safeParse({ notes: Array.from({ length: LIMITS.importChunkNotes + 1 }, () => note) }).success).toBe(false);
+    expect(importChunkSchema.safeParse({ notes: [{ ...note, entries: [{ day: "2026-02-30", body: "x" }] }] }).success).toBe(false);
+    expect(importChunkSchema.safeParse({ notes: [{ ...note, ownerUid: "x" }] }).success).toBe(false);
+    expect(importChunkSchema.safeParse({ notes: [{ title: "T", entries: [{ day: "2026-11-01", body: "a".repeat(LIMITS.entryBytes + 1) }] }] }).success).toBe(false);
+    expect(importChunkSchema.safeParse({ notes: [] }).success).toBe(false);
   });
 });
 
@@ -105,5 +110,14 @@ describe("text helpers", () => {
     expect(wordCount("  one two\nthree ")).toBe(3);
     expect(preview("\n\n# Heading line\nmore")).toBe("Heading line");
     expect(cleanText("a\r\nb\rc")).toBe("a\nb\nc");
+  });
+});
+
+describe("inline markdown in previews", async () => {
+  const { stripInline, preview } = await import("@/shared/text");
+  it("hides bold / italic / code markers", () => {
+    expect(stripInline("a **bold** and *italic* and `x`")).toBe("a bold and italic and x");
+    expect(preview("**Today** was *quiet*")).toBe("Today was quiet");
+    expect(stripInline("snake_case_name stays")).toBe("snake_case_name stays");
   });
 });

@@ -47,6 +47,7 @@ const MESSAGES: Record<string, string> = {
   email_taken: "An account with that e-mail already exists.",
   confirmation_mismatch: "The confirmation text does not match.",
   unsupported_file: "Only .md and .txt files can be imported.",
+  future_day: "A note in these files is dated after today. Fix the date and try again.",
   empty_import: "Nothing to import in those files.",
   note_limit: "Note limit reached.",
   entry_limit: "This note has reached its entry limit.",

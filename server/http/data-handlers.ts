@@ -3,9 +3,9 @@ import { requireUser } from "../session";
 import { RULES } from "../security/rate-limit";
 import { writeAudit } from "../services/audit";
 import { allNotesPortable, deleteAllNotes, importNotes, todayFor } from "../services/notes";
-import { confirmSchema, exportQuery, importSchema } from "@/shared/schemas";
+import { confirmSchema, exportQuery, importChunkSchema } from "@/shared/schemas";
 import { LIMITS } from "@/shared/limits";
-import { fileNameFor, parseNotes, serializeNotes } from "@/shared/markdown-io";
+import { fileNameFor, serializeNotes } from "@/shared/markdown-io";
 import { download, json } from "./respond";
 import { body, query, safe, writer, type Handler } from "./kit";
 
@@ -20,19 +20,17 @@ export const exportH: Handler = safe(async (req, deps) => {
 });
 
 /**
- * Import .md / .txt files as NEW notes. Files are read in the browser and sent as text (no binary uploads);
- * the server parses them again with strict limits.
+ * Import, one chunk at a time: the browser reads and parses the .md / .txt files (any number, whole folders) and
+ * sends the notes in chunks of ≤ 50 notes / 1.5 MB. Everything is validated again here; days after the writer's
+ * "today" are refused. Duplicates of earlier imports are skipped (see importNotes).
  */
 export const importH: Handler = safe(async (req, deps) => {
   const u = await writer(req, deps, "import");
-  const { files } = importSchema.parse(await body(req, LIMITS.importTotalBytes * 2 + 16_384));
-  for (const f of files) if (!/\.(md|markdown|txt)$/i.test(f.name)) throw new HttpError(400, "unsupported_file");
+  const { notes } = importChunkSchema.parse(await body(req, LIMITS.importChunkBytes + 65_536));
   const today = todayFor(u.profile.settings.timeZone, deps.now());
-  const parsed = files.flatMap((f) => parseNotes(f.text, f.name, today));
-  if (parsed.length === 0) throw new HttpError(400, "empty_import");
-  if (parsed.length > 200) throw new HttpError(400, "too_many_notes");
-  const res = await importNotes(deps.db, u.identity.uid, parsed, deps.now());
-  await writeAudit(deps.db, { action: "data.import", actorUid: u.identity.uid, details: res }, deps.now());
+  for (const n of notes) for (const e of n.entries) if (e.day > today) throw new HttpError(400, "future_day");
+  const res = await importNotes(deps.db, u.identity.uid, notes.map((n) => ({ title: n.title || "Imported note", entries: n.entries })), deps.now());
+  if (res.notes > 0) await writeAudit(deps.db, { action: "data.import", actorUid: u.identity.uid, details: res }, deps.now());
   return json(200, res);
 });
 

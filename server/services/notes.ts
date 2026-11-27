@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { AggregateField, type Firestore } from "../firebase";
 import { COLLECTIONS } from "../config";
 import { HttpError } from "../errors";
@@ -274,11 +274,39 @@ export async function allNotesPortable(db: Firestore, uid: string, noteId?: stri
   return out;
 }
 
-/** Import parsed notes as NEW notes (never merges into existing ones). Returns how many notes/entries were created. */
-export async function importNotes(db: Firestore, uid: string, list: PortableNote[], now: number): Promise<{ notes: number; entries: number }> {
+/** Fingerprint of an imported note's content (title + every dated section). */
+export function importHash(p: PortableNote): string {
+  const h = createHash("sha256").update(p.title);
+  for (const e of [...p.entries].sort((a, b) => a.day.localeCompare(b.day))) h.update(`\u0000${e.day}\u0001${e.body}`);
+  return h.digest("base64url");
+}
+
+/**
+ * Import parsed notes as NEW notes (never merges into existing ones). A note whose exact content was imported before
+ * (same fingerprint) is skipped, so re-running an interrupted import, or importing the same file twice, never
+ * creates duplicates. Returns how many notes/entries were created and how many were skipped.
+ */
+export async function importNotes(db: Firestore, uid: string, input: PortableNote[], now: number): Promise<{ notes: number; entries: number; skipped: number }> {
+  const hashes = input.map(importHash);
+  const seen = new Set<string>();
+  for (let i = 0; i < hashes.length; i += 30) {
+    const part = [...new Set(hashes.slice(i, i + 30))];
+    const snap = await notes(db).where("ownerUid", "==", uid).where("importHash", "in", part).select("importHash").get();
+    for (const d of snap.docs) seen.add(d.get("importHash") as string);
+  }
+  const list: { p: PortableNote; hash: string }[] = [];
+  input.forEach((p, i) => {
+    const hash = hashes[i]!;
+    if (!seen.has(hash)) {
+      seen.add(hash); // also drops duplicates inside the same chunk
+      list.push({ p, hash });
+    }
+  });
+  const skipped = input.length - list.length;
+  if (list.length === 0) return { notes: 0, entries: 0, skipped };
   await assertNoteQuota(db, uid, list.length);
   let entryTotal = 0;
-  for (const p of list) {
+  for (const { p, hash } of list) {
     const id = newId();
     const valid = p.entries.filter((e) => byteLength(e.body) <= LIMITS.entryBytes).slice(0, LIMITS.entriesPerNote);
     const sorted = [...valid].sort((a, b) => a.day.localeCompare(b.day));
@@ -299,6 +327,7 @@ export async function importNotes(db: Firestore, uid: string, list: PortableNote
       preview: last ? preview(last.body) : "",
     };
     let batch = db.batch();
+    (doc as NoteDoc & { importHash: string }).importHash = hash;
     let ops = 0;
     batch.create(notes(db).doc(id), doc);
     ops++;
@@ -314,7 +343,7 @@ export async function importNotes(db: Firestore, uid: string, list: PortableNote
     entryTotal += sorted.length;
   }
   await recordActivity(db, dayKey(now, "UTC"), { notes: list.length, newEntries: entryTotal });
-  return { notes: list.length, entries: entryTotal };
+  return { notes: list.length, entries: entryTotal, skipped };
 }
 
 export interface TimelineItem { noteId: string; noteTitle: string; day: string; words: number; preview: string; updatedAt: number }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
+import { Portal } from "./Portal";
 
 /** Animated confirmation dialog. Escape / backdrop click cancel; focus moves to the safe button. */
 export function ConfirmDialog({
@@ -36,6 +37,7 @@ export function ConfirmDialog({
   }, [open, busy, onCancel]);
   if (!open) return null;
   return (
+    <Portal>
     <div className="modal-backdrop" role="presentation" onClick={() => !busy && onCancel()}>
       <div className="panel modal" role="alertdialog" aria-modal="true" aria-labelledby="dlg-title" onClick={(e) => e.stopPropagation()}>
         <h2 id="dlg-title">{title}</h2>
@@ -49,5 +51,6 @@ export function ConfirmDialog({
         </div>
       </div>
     </div>
+    </Portal>
   );
 }

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 · 2026-11-28
+
+- **Much larger imports.**
+  - Any number of .md / .txt files, up to 1,000 files or 50 MB at once, or a whole folder (**Choose folder**).
+  - Files are parsed in the browser and previewed (files · notes · days · size), then sent in chunks of up to 50 notes with a progress bar.
+  - The server re-validates every chunk: dates must be real days and not after today; size and quota limits apply.
+- **No duplicates.** A note whose exact content was imported before is skipped. If an import stops (for example at the daily Firestore write limit), run it again: it continues without doubling anything.
+- **Dialogs are always centred on the screen.** "Write today" on the Notes and Archive tabs could open its dialog off-screen on a long page. All dialogs now render at the top level, and the page behind them does not scroll.
+- **Formatted text.** `*italic*` and `**bold**` show as italic and bold, with the markers hidden. This applies to locked days, and to today's box whenever you are not typing (click it to continue, with the cursor at the end). Previews in Notes and Overview no longer show the markers.
+
 ## 0.2.2 · 2026-11-28
 
 - Imported notes take their "created" date from their earliest dated section (when they were first written), so the Archive keeps them in true writing order instead of grouping them at the import time.
