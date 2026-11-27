@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.1 · 2026-11-28
+
+Fixes:
+- **Settings show the latest values.** After switching e.g. Sonata → Palace and coming back from another menu, Preferences, Home, the profile menu and **Write today** now show the new choice. Before, they could briefly show the old one, because of the short page and profile caches.
+- **Pages in Notes and Archive.** Notes now has numbered pages with a total, like Archive. Click **Page x of y** to type a page and press Enter to go there. A page past the end shows an empty list with the last page.
+- **Dialogs** have a solid background, so the page behind no longer shows through.
+- **Spacing:** status messages ("Reset link sent…", "Photo updated." and others) sit a little below their buttons and leave no empty space underneath.
+
 ## 1.0.0 · 2026-11-28
 
 First stable release.

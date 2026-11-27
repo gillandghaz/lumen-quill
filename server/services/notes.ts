@@ -402,15 +402,15 @@ export interface TimelineItem { noteId: string; noteTitle: string; day: string; 
  * Timeline: every dated entry of the user, newest day first, across all notes (one collection-group query,
  * TIMELINE_PAGE_SIZE per page, plus one batched read for the note titles).
  */
-export async function timeline(db: Firestore, uid: string, cursor?: string): Promise<{ items: TimelineItem[]; nextCursor: string | null }> {
-  let q = db.collectionGroup(COLLECTIONS.entries).where("ownerUid", "==", uid).orderBy("day", "desc").orderBy("updatedAt", "desc").limit(TIMELINE_PAGE_SIZE + 1);
-  if (cursor) {
-    const [day, at] = cursor.split("|");
-    if (!day || !/^\d{4}-\d{2}-\d{2}$/.test(day) || !Number.isFinite(Number(at))) throw new HttpError(400, "bad_request");
-    q = q.startAfter(day, Number(at));
-  }
-  const snap = await q.get();
-  const docs = snap.docs.slice(0, TIMELINE_PAGE_SIZE);
+export async function timeline(db: Firestore, uid: string, page = 1): Promise<{ items: TimelineItem[]; page: number; pages: number; total: number }> {
+  const base = db.collectionGroup(COLLECTIONS.entries).where("ownerUid", "==", uid).orderBy("day", "desc").orderBy("updatedAt", "desc");
+  // The count uses the same composite index (one read per 1000 entries).
+  const total = (await base.count().get()).data().count;
+  const pages = Math.max(1, Math.ceil(total / TIMELINE_PAGE_SIZE));
+  page = Math.min(Math.max(1, page), 100_000);
+  if (page > pages) return { items: [], page, pages, total };
+  const snap = await base.offset((page - 1) * TIMELINE_PAGE_SIZE).limit(TIMELINE_PAGE_SIZE).get();
+  const docs = snap.docs;
   const ids = [...new Set(docs.map((d) => d.get("noteId") as string))];
   const titles = new Map<string, string>();
   if (ids.length) {
@@ -427,8 +427,7 @@ export async function timeline(db: Firestore, uid: string, cursor?: string): Pro
       preview: preview(d.get("body") as string, 180),
       updatedAt: d.get("updatedAt") as number,
     }));
-  const last = docs[docs.length - 1];
-  return { items, nextCursor: snap.docs.length > TIMELINE_PAGE_SIZE && last ? `${last.get("day")}|${last.get("updatedAt")}` : null };
+  return { items, page, pages, total };
 }
 
 /**

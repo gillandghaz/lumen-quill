@@ -5,12 +5,13 @@ import Link from "next/link";
 import { api, errorText } from "@/client/lib/api";
 import { SkeletonRows } from "./OverviewTab";
 import type { NoteMeta } from "./useWriteToday";
+import { PageJump, PageMissing } from "../PageJump";
 
 interface Page { items: NoteMeta[]; page: number; pages: number; total: number }
 
 /**
  * Archive: notes in the order they were created (newest first; editing never reshuffles them). Rows show the title
- * and facts only. Numbered pages of 20; any page number can be typed in. A page past the end shows an empty page
+ * and facts only. Numbered pages of 20; click "Page x" to type any page number. A page past the end shows an empty page
  * and says which page is the last one.
  */
 export function ArchiveTab({ onWrite }: { onWrite: () => void }) {
@@ -73,11 +74,7 @@ export function ArchiveTab({ onWrite }: { onWrite: () => void }) {
       {!data ? (
         <SkeletonRows n={6} />
       ) : beyond ? (
-        <div className="panel empty">
-          <p className="display">Page {data.page} does not exist</p>
-          <p>There are no notes here. The last page is <strong>{data.pages}</strong>.</p>
-          <button className="btn" type="button" onClick={() => go(data.pages)}>Go to page {data.pages}</button>
-        </div>
+        <PageMissing page={data.page} pages={data.pages} what="notes" onGo={go} />
       ) : data.items.length === 0 ? (
         <div className="panel empty">
           <p className="display">{searching ? "Nothing found" : "The archive is quiet"}</p>
@@ -96,31 +93,5 @@ export function ArchiveTab({ onWrite }: { onWrite: () => void }) {
 
       {data && !searching && (data.pages > 1 || beyond) && <PageJump page={data.page} pages={data.pages} busy={busy} onGo={go} />}
     </>
-  );
-}
-
-/** Prev / next plus a number box to jump to any page. */
-function PageJump({ page, pages, busy, onGo }: { page: number; pages: number; busy: boolean; onGo: (p: number) => void }) {
-  const [value, setValue] = useState(String(page));
-  useEffect(() => setValue(String(page)), [page]);
-  return (
-    <nav className="pager" aria-label="Pages">
-      <button type="button" className="btn btn-sm btn-ghost" disabled={busy || page <= 1} onClick={() => onGo(Math.min(page - 1, pages))}>← Prev</button>
-      <form
-        className="page-jump"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const n = Number(value);
-          if (Number.isInteger(n) && n >= 1) onGo(n);
-          else setValue(String(page));
-        }}
-      >
-        <label className="mono faint" htmlFor="page-no">Page</label>
-        <input id="page-no" className="input page-input" inputMode="numeric" pattern="[0-9]*" value={value} onChange={(e) => setValue(e.target.value.replace(/\D/g, "").slice(0, 6))} aria-label={`Page number, 1 to ${pages}`} />
-        <span className="mono faint">of {pages}</span>
-        <button type="submit" className="btn btn-sm btn-ghost" disabled={busy}>Go</button>
-      </form>
-      <button type="button" className="btn btn-sm btn-ghost" disabled={busy || page >= pages} onClick={() => onGo(page + 1)}>Next →</button>
-    </nav>
   );
 }

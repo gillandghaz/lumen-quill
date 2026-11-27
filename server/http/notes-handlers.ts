@@ -85,5 +85,8 @@ export const overviewH: Handler = safe(async (req, deps) => {
 /** Home → Notes: every dated entry across all notes, newest day first. */
 export const timelineH: Handler = safe(async (req, deps) => {
   const u = await requireUser(req, deps);
-  return json(200, await timeline(deps.db, u.identity.uid, timelineQuery.parse(query(req)).cursor));
+  const q = timelineQuery.parse(query(req));
+  // Like the archive: deep pages read every skipped entry (offset), so they count against the heavy-read budget.
+  if (q.page && Number(q.page) > 5) await deps.limiter.hit("heavy-read", u.identity.uid, RULES.heavyRead);
+  return json(200, await timeline(deps.db, u.identity.uid, q.page ? Number(q.page) : 1));
 });

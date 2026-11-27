@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { PageUser } from "@/server/page-guards";
 import { api, errorText } from "@/client/lib/api";
 import { applyMode } from "../ModeSwitch";
+import { updateLiveUser } from "@/client/lib/live-user";
 import type { HomeTab, Mode, NextDayBehavior } from "@/shared/limits";
 import { dayKey, shortDayLabel } from "@/shared/day";
 
@@ -11,7 +12,15 @@ type Settings = PageUser["settings"];
 
 /** Compact preferences: one row per setting, label on the left, control on the right. Saved instantly. */
 export function PreferencesTab({ user }: { user: PageUser }) {
-  const [s, setS] = useState<Settings>(user.settings);
+  // Read straight from the live user (SettingsShell): this tab's latest change, else the server's value.
+  const s = user.settings;
+  const [scaleDraft, setScaleDraft] = useState<number | null>(null); // while the text-size slider moves
+  const scale = scaleDraft ?? s.fontScale;
+  const commitScale = () => {
+    if (scaleDraft === null) return;
+    setScaleDraft(null);
+    if (scaleDraft !== s.fontScale) void save({ fontScale: scaleDraft });
+  };
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
   const zones = useMemo(() => {
     try {
@@ -22,14 +31,19 @@ export function PreferencesTab({ user }: { user: PageUser }) {
   }, [s.timeZone]);
 
   async function save(patch: Partial<Settings>) {
-    setS((cur) => ({ ...cur, ...patch }));
+    const before = Object.fromEntries(Object.keys(patch).map((k) => [k, s[k as keyof Settings]])) as Partial<Settings>;
     if (patch.mode) applyMode(patch.mode);
     if (patch.fontScale) document.querySelector<HTMLElement>(".app-shell")?.style.setProperty("--font-scale", String(patch.fontScale));
+    updateLiveUser({ settings: patch });
     setStatus({ ok: true, text: "Saving…" });
     try {
-      await api("/api/account/settings", { method: "PUT", body: patch });
+      const r = await api<{ settings: Settings }>("/api/account/settings", { method: "PUT", body: patch });
+      updateLiveUser({ settings: r.settings });
       setStatus({ ok: true, text: "Saved" });
     } catch (e) {
+      updateLiveUser({ settings: before }); // not saved: show the previous value again
+      if (before.mode) applyMode(before.mode);
+      if (before.fontScale) document.querySelector<HTMLElement>(".app-shell")?.style.setProperty("--font-scale", String(before.fontScale));
       setStatus({ ok: false, text: errorText(e) });
     }
   }
@@ -55,11 +69,11 @@ export function PreferencesTab({ user }: { user: PageUser }) {
           {zones.map((z) => <option key={z} value={z}>{z}</option>)}
         </select>
       </Row>
-      <Row label="Text size" hint={`${Math.round(s.fontScale * 100)}%`}>
-        <input type="range" className="range" min={0.85} max={1.3} step={0.05} value={s.fontScale} aria-label="Text size"
-          onChange={(e) => setS({ ...s, fontScale: Number(e.target.value) })}
-          onPointerUp={() => void save({ fontScale: s.fontScale })}
-          onKeyUp={() => void save({ fontScale: s.fontScale })} />
+      <Row label="Text size" hint={`${Math.round(scale * 100)}%`}>
+        <input type="range" className="range" min={0.85} max={1.3} step={0.05} value={scale} aria-label="Text size"
+          onChange={(e) => setScaleDraft(Number(e.target.value))}
+          onPointerUp={commitScale}
+          onKeyUp={commitScale} />
       </Row>
     </section>
   );

@@ -27,7 +27,9 @@ export const viewport: Viewport = { themeColor: "#070912" };
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [jar, ctx] = await Promise.all([cookies(), loadPageContext()]);
   const cookieMode = jar.get(MODE_COOKIE)?.value;
-  const mode: Mode = ctx.configured && ctx.user ? ctx.user.settings.mode : isMode(cookieMode) ? cookieMode : "sonata";
+  // The mode cookie is written on every change and at sign-in, so it is never older than the (briefly cached)
+  // profile; the profile is the fallback when the cookie is missing (e.g. a new browser).
+  const mode: Mode = isMode(cookieMode) ? cookieMode : ctx.configured && ctx.user ? ctx.user.settings.mode : "sonata";
   return (
     <html lang="en" data-mode={mode} className={[inter.variable, rajdhani.variable, cinzel.variable, cormorant.variable, cormorantUpright.variable, mono.variable].join(" ")}>
       <body>

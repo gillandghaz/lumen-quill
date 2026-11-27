@@ -30,7 +30,7 @@ All endpoints are under `/api`, answer JSON (`Cache-Control: no-store`, CSP `def
 | PUT | `/api/notes/{id}/entries/{day}` | M, U (owner) | save (in memory) | Save today's text (`day` must be today, else `403 day_locked`; `409 conflict` on a newer version; empty text removes the day) |
 | DELETE | `/api/notes/{id}/entries/{day}` | M, U (owner) | write | Delete one day |
 | GET | `/api/home/overview` | U | – | Totals, streak, five newest notes |
-| GET | `/api/home/notes?cursor=` | U | – | Every dated entry, newest first (20 per page) |
+| GET | `/api/home/notes?page=N` | U | heavyRead for page > 5 | Every dated entry, newest first (20 per page; returns page, pages, total) |
 
 ## Account
 
