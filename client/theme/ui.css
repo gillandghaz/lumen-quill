@@ -254,7 +254,9 @@ label.btn[aria-disabled="true"] { opacity: 0.6; pointer-events: none; }
 
 .timeline { position: relative; display: grid; gap: 0.6rem; padding-left: 1.4rem; }
 .timeline::before { content: ""; position: absolute; left: 0.42rem; top: 0.5rem; bottom: 0.5rem; width: 1px; background: linear-gradient(var(--line-strong), var(--line)); }
-.month { font-size: 0.8rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin: 1rem 0 0.5rem -1.4rem; font-family: var(--font-mono); }
+/* Month labels sit to the right of the rail, never on top of the dots and line. */
+.month { font-size: 0.8rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin: 1.25rem 0 0.6rem; padding-left: 0.1rem; font-family: var(--font-mono); }
+.timeline > div:first-child .month { margin-top: 0; }
 [data-mode="palace"] .month { font-family: var(--font-display); color: var(--accent); }
 .timeline-item {
   position: relative;
@@ -379,3 +381,55 @@ label.btn[aria-disabled="true"] { opacity: 0.6; pointer-events: none; }
 .scroll-5, .scroll-8, .table-wrap { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
 
 @media (max-width: 640px) { .topbar { flex-wrap: nowrap; } .brand span { letter-spacing: 0.14em; } }
+
+/* ---- v0.2.1 polish --------------------------------------------------- */
+/* Autosave never moves the page: the badge has a fixed size and the icon a fixed box. */
+.save-badge { min-width: 13.5rem; justify-content: flex-start; white-space: nowrap; }
+.save-icon { display: inline-grid; place-items: center; width: 14px; height: 14px; flex: none; }
+.save-icon .spinner { width: 12px; height: 12px; }
+.save-text { overflow: hidden; text-overflow: ellipsis; }
+.entry-tools { min-height: 2.25rem; }
+.note-stats { margin: -0.75rem 0 1.5rem; }
+
+/* Today: grows with its text (no inner scrollbar). Past days: locked, sized to their text. */
+.editor-today { resize: none; overflow: hidden; }
+.editor-locked {
+  min-height: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  resize: none;
+  cursor: default;
+  color: var(--muted);
+  background-color: color-mix(in srgb, var(--panel) 70%, transparent);
+  border-style: dashed;
+}
+.editor-locked:empty::before { content: "(empty)"; color: var(--faint); }
+.entry-past .entry-day .date { opacity: 0.85; }
+.lock-tag {
+  order: 3;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--faint);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.05rem 0.5rem;
+}
+.continue-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.1rem 1.25rem;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  animation: rise 360ms var(--ease-out) both;
+}
+.continue-box p { margin: 0; }
+
+/* Spacing fixes */
+.form-hint { margin-top: 0.75rem; }
+.backup-range { margin-bottom: 1rem; }
+.backup-action { margin-top: 1.25rem; }

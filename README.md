@@ -10,8 +10,9 @@ A private, invitation-only archive of dated notes. Two display modes:
 ## How notes work
 
 - A note is made of **dated sections** (`YYYY-MM-DD`, in the writer's own time zone).
-- **Write today** on the same day → continues the latest note.
-- **Write today** on a later day → by default asks: *continue* (adds today's section to the latest note) or *start a new note*. Settings can make either choice automatic.
+- **Write today** on the same day → continues the latest note (cursor after the last character, on a new line).
+- **Write today** on a later day → by default asks: *continue* (adds today's section below the earlier days) or *start a new note*. Preferences can make either choice automatic.
+- **Only today's section can be written.** Earlier days are locked (read-only, deletable); to change one, export, edit and import it as a new note.
 - **New note** always creates a separate note.
 - Typing autosaves (debounced) with a visible status (*Saving…* → *All changes saved*), retries offline, refuses to overwrite a newer version from another tab, and the browser asks before you leave while a save is still pending.
 

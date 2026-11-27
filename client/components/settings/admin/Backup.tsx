@@ -43,9 +43,11 @@ export function Backup() {
     <section className="panel">
       <div className="panel-head"><h2>Backup</h2></div>
       <p className="muted">Every account profile and every note with its dated entries, as one JSON file. It contains private writing: store it encrypted and never share it.</p>
-      <div className="segmented" role="radiogroup" aria-label="Backup range" style={{ marginBottom: "1rem" }}>
+      <div className="backup-range">
+      <div className="segmented" role="radiogroup" aria-label="Backup range">
         <button type="button" role="radio" className="seg" aria-checked={range === "all"} onClick={() => setRange("all")}>Everything</button>
         <button type="button" role="radio" className="seg" aria-checked={range === "custom"} onClick={() => setRange("custom")}>Date range</button>
+      </div>
       </div>
       {range === "custom" && (
         <div className="grid-fields grid-2 tab-enter">
@@ -55,7 +57,9 @@ export function Backup() {
       )}
       {range === "custom" && <p className="hint">Only entries written on these days (inclusive) are included, with the notes they belong to.</p>}
       {state.text && <p className={state.ok ? "success" : "error"} role="status">{state.text}</p>}
+      <div className="backup-action">
       <button className="btn btn-primary" type="button" disabled={state.busy || invalid} onClick={() => void run()}>{state.busy && <span className="spinner" aria-hidden="true" />}Download backup</button>
+      </div>
     </section>
   );
 }

@@ -36,6 +36,7 @@ const MESSAGES: Record<string, string> = {
   rate_limited: "Too many requests. Please wait a moment.",
   not_found: "Not found.",
   conflict: "This entry was changed in another tab. Reload to see the latest version.",
+  day_locked: "That day is over and locked. Only today's section can be written.",
   too_large: "That is too large.",
   username_taken: "That username is taken.",
   username_reserved: "That username is reserved.",

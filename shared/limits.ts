@@ -32,6 +32,7 @@ export const isHomeTab = (v: unknown): v is HomeTab => typeof v === "string" && 
 export const RETENTION_DAYS = [1, 3, 7, 30] as const;
 export type RetentionDays = (typeof RETENTION_DAYS)[number];
 
-export const NOTES_PAGE_SIZE = 15;
+/** Archive rows are one line (title + facts), so a page holds 20. */
+export const NOTES_PAGE_SIZE = 20;
 export const TIMELINE_PAGE_SIZE = 20;
 export const AVATAR_MAX_CHARS = 120_000;

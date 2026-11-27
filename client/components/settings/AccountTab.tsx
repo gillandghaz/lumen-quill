@@ -121,7 +121,7 @@ function ProfileSection({ user }: { user: PageUser }) {
         </div>
         <button className="btn" type="submit" disabled={busy || !valid || username === saved}>{busy && <span className="spinner" aria-hidden="true" />}Save</button>
       </form>
-      <p className="hint">Unique across Lumen Quill: a name already in use is refused. 3–24 characters (a–z, 0–9, dot, underscore); changeable once every 7 days.</p>
+      <p className="hint form-hint">Unique across Lumen Quill: a name already in use is refused. 3–24 characters (a–z, 0–9, dot, underscore); changeable once every 7 days.</p>
       {msg && <p className={msg.ok ? "success" : "error"} role="status">{msg.text}</p>}
     </section>
   );
