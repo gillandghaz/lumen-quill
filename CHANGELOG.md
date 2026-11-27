@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.2 · 2026-11-28
+
+- Imported notes take their "created" date from their earliest dated section (when they were first written), so the Archive keeps them in true writing order instead of grouping them at the import time.
+- **Write today** now continues the note you last *wrote in* (latest dated section). Before, it used the last database update, so after an import it could pick an arbitrary note. A note just created with New note and still empty is opened directly.
+- **Archive pages are numbered.** Type any page number to jump to it. A page past the end is shown empty, with a message naming the last page.
+- The Save (username) and Delete all notes buttons are exactly as tall as the input beside them.
+
 ## 0.2.1 · 2026-11-28
 
 - **Writing flow.**
