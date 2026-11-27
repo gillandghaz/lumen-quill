@@ -13,7 +13,7 @@ const cormorant = Cormorant_Garamond({ subsets: ["latin"], weight: ["400", "500"
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--f-mono", display: "swap" });
 
 export const metadata: Metadata = {
-  title: { default: "Lumen Archive", template: "%s · Lumen Archive" },
+  title: { default: "Lumine Archive", template: "%s · Lumine Archive" },
   description: "A private archive for your days. Dated notes in two modes: Sonata and Palace.",
   robots: { index: true, follow: false },
 };

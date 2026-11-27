@@ -241,7 +241,7 @@ function Backup() {
         if (!cursor) break;
       }
       const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
-      downloadBlob(JSON.stringify({ format: "lumen-archive-backup", version: 1, exportedAt: new Date().toISOString(), users, notes }, null, 2), `lumen-archive-backup-${stamp}.json`, "application/json");
+      downloadBlob(JSON.stringify({ format: "lumine-archive-backup", version: 1, exportedAt: new Date().toISOString(), users, notes }, null, 2), `lumine-archive-backup-${stamp}.json`, "application/json");
       setState({ busy: false, text: `Backup ready: ${users.length} accounts, ${notes.length} notes.`, ok: true });
     } catch (e) {
       setState({ busy: false, text: errorText(e), ok: false });

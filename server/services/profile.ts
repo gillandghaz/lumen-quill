@@ -28,7 +28,7 @@ export interface Profile {
 export const DEFAULT_SETTINGS: UserSettings = { mode: "sonata", timeZone: DEFAULT_TIME_ZONE, nextDay: "ask", fontScale: 1 };
 
 /** Reserved names cannot be taken by anyone (impersonation of staff/system). */
-const RESERVED = new Set(["admin", "administrator", "root", "system", "support", "lumen", "lumenarchive", "security", "staff", "owner", "help", "api", "null", "undefined"]);
+const RESERVED = new Set(["admin", "administrator", "root", "system", "support", "lumine", "luminearchive", "security", "staff", "owner", "help", "api", "null", "undefined"]);
 
 export function normalizeProfile(uid: string, d: Record<string, unknown>): Profile {
   const s = (d["settings"] ?? {}) as Partial<UserSettings>;

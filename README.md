@@ -1,4 +1,4 @@
-# Lumen Archive
+# Lumine Archive
 
 A private, invitation-only archive of dated notes. Two display modes:
 
@@ -31,7 +31,7 @@ First day...
 Second day...
 ```
 
-Several notes in one file are separated by a line `<!-- lumen:note -->`. Imported files always become new notes; text outside a date heading is dated today.
+Several notes in one file are separated by a line `<!-- lumine:note -->`. Imported files always become new notes; text outside a date heading is dated today.
 
 ## Stack
 

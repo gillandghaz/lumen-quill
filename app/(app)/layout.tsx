@@ -20,7 +20,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div style={{ ["--font-scale" as string]: String(ctx.user.settings.fontScale) }}>
       <SessionWatcher />
       <header className="topbar">
-        <Link href="/archive" className="brand"><BrandMark />Lumen Archive</Link>
+        <Link href="/archive" className="brand"><BrandMark />Lumine Archive</Link>
         <AppNav admin={ctx.user.admin} />
       </header>
       {children}

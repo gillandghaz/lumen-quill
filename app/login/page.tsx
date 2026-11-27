@@ -13,7 +13,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   return (
     <>
       <header className="landing-top">
-        <Link href="/" className="brand"><BrandMark />Lumen Archive</Link>
+        <Link href="/" className="brand"><BrandMark />Lumine Archive</Link>
       </header>
       <main id="main" className="auth-wrap">
         <div className="panel auth-card">
