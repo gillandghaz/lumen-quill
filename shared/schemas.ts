@@ -36,9 +36,16 @@ export const usernameSchema = z.string().min(LIMITS.usernameMin).max(LIMITS.user
 const usernameInput = z.string().max(64).transform((s) => s.trim().toLowerCase()).pipe(usernameSchema);
 export const profileSchema = z.object({ username: usernameInput }).strict();
 
-export const importSchema = z.object({
-  files: z.array(z.object({ name: z.string().min(1).max(200), text: z.string() }).strict()).min(1).max(LIMITS.importFiles),
-}).strict().refine((v) => v.files.reduce((n, f) => n + byteLength(f.text), 0) <= LIMITS.importTotalBytes, { message: "too_large" });
+/**
+ * One chunk of an import: notes already parsed in the browser (shared/markdown-io.ts), re-validated here.
+ * Dates must be real calendar days; the handler also refuses days after the writer's "today".
+ */
+export const importChunkSchema = z.object({
+  notes: z.array(z.object({
+    title: title,
+    entries: z.array(z.object({ day: daySchema, body: entryBody }).strict()).max(LIMITS.entriesPerNote),
+  }).strict()).min(1).max(LIMITS.importChunkNotes),
+}).strict().refine((v) => byteLength(JSON.stringify(v)) <= LIMITS.importChunkBytes, { message: "too_large" });
 
 export const exportQuery = z.object({
   format: z.enum(["md", "txt"]).default("md"),

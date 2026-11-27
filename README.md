@@ -32,7 +32,7 @@ First day...
 Second day...
 ```
 
-Several notes in one file are separated by a line `<!-- lumen:note -->`. Imported files always become new notes; text outside a date heading is dated today.
+Several notes in one file are separated by a line `<!-- lumen:note -->`. Imported files always become new notes; text outside a date heading is dated today. Imports take any number of files (up to 1,000 / 50 MB at once) or a whole folder, are sent in chunks with a progress bar, and skip notes whose exact content was imported before.
 
 ## Stack
 

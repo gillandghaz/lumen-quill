@@ -442,3 +442,23 @@ label.btn[aria-disabled="true"] { opacity: 0.6; pointer-events: none; }
 /* Archive page jump */
 .page-jump { display: inline-flex; align-items: center; gap: 0.5rem; }
 .page-input { width: 4.2rem; min-height: 2rem; height: 2rem; padding: 0.2rem 0.5rem; text-align: center; font-family: var(--font-mono); }
+
+/* Import: preview + progress */
+.import-plan { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--line); display: grid; gap: 0.75rem; }
+.import-summary { margin: 0; font-size: 1.02rem; }
+.progress { height: 8px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); overflow: hidden; }
+.progress span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width 400ms var(--ease); }
+
+/* Formatted view: **bold** and *italic* shown as such, markers hidden (locked days, and today while not typing). */
+.editor-rendered { white-space: normal; cursor: text; min-height: 0; }
+.editor-rendered p { margin: 0 0 0.6em; white-space: pre-wrap; }
+.editor-rendered p:last-child, .editor-rendered ul:last-child, .editor-rendered ol:last-child, .editor-rendered blockquote:last-child { margin-bottom: 0; }
+.editor-rendered strong { font-weight: 700; color: var(--text); }
+.editor-rendered em { font-style: italic; }
+.editor-rendered ul, .editor-rendered ol { margin: 0 0 0.6em; padding-left: 1.4em; }
+.editor-rendered blockquote { margin: 0 0 0.6em; padding-left: 0.9rem; border-left: 2px solid var(--accent); color: var(--muted); }
+.editor-rendered h3, .editor-rendered h4 { margin: 0.2em 0 0.4em; font-size: 1.05em; letter-spacing: 0.04em; }
+.editor-rendered code { font-family: var(--font-mono); font-size: 0.88em; background: var(--panel-2); padding: 0.05em 0.35em; }
+.editor-today.editor-rendered { min-height: 14rem; }
+.editor-today.editor-rendered:hover { border-color: var(--line-strong); }
+.editor-locked.editor-rendered { cursor: default; }

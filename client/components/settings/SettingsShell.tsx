@@ -32,7 +32,7 @@ export function SettingsShell({ user, initialTab }: { user: PageUser; initialTab
       <div key={tab} className="settings-body tab-enter">
         {tab === "account" && <AccountTab user={user} />}
         {tab === "preferences" && <PreferencesTab user={user} />}
-        {tab === "data" && <DataTab />}
+        {tab === "data" && <DataTab timeZone={user.settings.timeZone} />}
         {tab === "admin" && user.admin && <AdminTab selfUid={user.uid} />}
       </div>
     </div>

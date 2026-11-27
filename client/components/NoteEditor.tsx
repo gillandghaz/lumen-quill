@@ -7,6 +7,7 @@ import { dayLabel } from "@/shared/day";
 import { LIMITS } from "@/shared/limits";
 import { byteLength, wordCount } from "@/shared/text";
 import { ConfirmDialog } from "./Modal";
+import { Markdown } from "./Markdown";
 import { confirmLeave, setPending } from "@/client/lib/unsaved";
 
 interface Entry { day: string; body: string; words: number; createdAt: number; updatedAt: number }
@@ -97,7 +98,7 @@ export function NoteEditor({ id, continueToday }: { id: string; continueToday: b
               <span className="date">{dayLabel(e.day)}</span>
               <span className="lock-tag">Locked</span>
             </div>
-            <div className="editor editor-locked" aria-readonly="true">{e.body}</div>
+            <div className="editor editor-locked editor-rendered" aria-readonly="true"><Markdown text={e.body} /></div>
             <div className="entry-tools">
               <span className="mono faint">{e.words} words</span>
               <button className="btn btn-sm btn-ghost" type="button" onClick={() => setAsk({ kind: "day", day: e.day })}>Delete day</button>
@@ -190,7 +191,19 @@ function TodayEditor({ noteId, day, initialBody, initialUpdatedAt, onSaved, onSt
   const latest = useRef(start);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inFlight = useRef(false);
+  const [editing, setEditing] = useState(true);
   const key = `${noteId}/${day}`;
+
+  function resume() {
+    setEditing(true);
+    requestAnimationFrame(() => {
+      const el = ref.current;
+      if (!el) return;
+      const end = el.value.length;
+      el.focus({ preventScroll: true });
+      el.setSelectionRange(end, end);
+    });
+  }
 
   useEffect(() => {
     onState(state);
@@ -269,9 +282,23 @@ function TodayEditor({ noteId, day, initialBody, initialUpdatedAt, onSaved, onSt
   return (
     <>
       <label className="sr-only" htmlFor={`e-${day}`}>Entry for {dayLabel(day)}</label>
+      {!editing && body.trim() !== "" && (
+        <div
+          className="editor editor-today editor-rendered"
+          role="button"
+          tabIndex={0}
+          aria-label="Formatted text. Click to continue writing."
+          onClick={resume}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); resume(); } }}
+        >
+          <Markdown text={body} />
+        </div>
+      )}
       <textarea
         ref={ref}
         id={`e-${day}`}
+        hidden={!editing && body.trim() !== ""}
+        onFocus={() => setEditing(true)}
         className="editor editor-today"
         value={body}
         placeholder="Write…"
@@ -284,7 +311,7 @@ function TodayEditor({ noteId, day, initialBody, initialUpdatedAt, onSaved, onSt
           if (timer.current) clearTimeout(timer.current);
           timer.current = setTimeout(() => { timer.current = null; void save(); }, DEBOUNCE_MS);
         }}
-        onBlur={() => void save()}
+        onBlur={() => { setEditing(false); void save(); }}
       />
       <div className="entry-tools">
         <span className="mono faint">{wordCount(body)} words</span>
