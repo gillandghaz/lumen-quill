@@ -61,7 +61,7 @@ The admin creates every other account in **Admin → Accounts** and manages secu
 
 ```
 npm ci
-node --env-file=<secrets file> node_modules/next/dist/bin/next dev
+node --env-file=<secrets file> scripts/with-env.mjs dev
 npm run lint && npm run typecheck && npm test && npm run build && npm run audit:deps
 ```
 
