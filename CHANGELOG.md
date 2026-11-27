@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2 · 2026-11-28
+
+- Imported notes take their "created" date from their earliest dated section (when they were first written), so the Archive keeps them in true writing order instead of grouping them at the import time.
+
 ## 0.2.1 · 2026-11-28
 
 - **Writing flow.**

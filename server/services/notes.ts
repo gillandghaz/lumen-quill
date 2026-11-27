@@ -270,10 +270,13 @@ export async function importNotes(db: Firestore, uid: string, list: PortableNote
     const valid = p.entries.filter((e) => byteLength(e.body) <= LIMITS.entryBytes).slice(0, LIMITS.entriesPerNote);
     const sorted = [...valid].sort((a, b) => a.day.localeCompare(b.day));
     const last = sorted[sorted.length - 1];
+    // "Created" = when the note was first written: its earliest dated section (noon UTC keeps the calendar day in
+    // every time zone), never in the future; a note without dates counts as created now.
+    const firstMs = sorted[0] ? Date.parse(`${sorted[0].day}T12:00:00Z`) : NaN;
     const doc: NoteDoc = {
       ownerUid: uid,
       title: p.title || "Imported note",
-      createdAt: now,
+      createdAt: Number.isFinite(firstMs) ? Math.min(firstMs, now) : now,
       updatedAt: now,
       firstDay: sorted[0]?.day ?? null,
       lastDay: last?.day ?? null,
