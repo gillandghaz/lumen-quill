@@ -7,6 +7,7 @@ import { fileToAvatar } from "@/client/lib/avatar";
 import { logoutEverywhere, requestPasswordReset } from "@/client/auth/actions";
 import { LIMITS } from "@/shared/limits";
 import { Avatar } from "../Avatar";
+import { updateLiveUser } from "@/client/lib/live-user";
 import { ConfirmDialog } from "../Modal";
 
 const PROVIDER: Record<string, string> = { "google.com": "Google", password: "E-mail + password" };
@@ -32,7 +33,7 @@ function PhotoSection({ user }: { user: PageUser }) {
 
   function announce(v: number | null) {
     setVersion(v);
-    window.dispatchEvent(new CustomEvent("lq:avatar", { detail: v }));
+    updateLiveUser({ avatarVersion: v });
   }
 
   async function upload(file: File | undefined) {
@@ -107,6 +108,7 @@ function ProfileSection({ user }: { user: PageUser }) {
         try {
           const r = await api<{ username: string }>("/api/account/username", { method: "PUT", body: { username } });
           setSaved(r.username);
+          updateLiveUser({ username: r.username });
           setUsername(r.username);
           setMsg({ ok: true, text: "Username saved." });
         } catch (err) {

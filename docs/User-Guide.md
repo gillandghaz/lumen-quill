@@ -53,13 +53,15 @@ Today's date with **Write today** / **Continue writing**, your totals (notes, da
 
 <img src="images/05-home-notes.png" alt="Home, Notes" width="720">
 
-Every dated entry across all notes, newest first, grouped by month. Click one to open its note at that day.
+Every dated entry across all notes, newest first, grouped by month, 20 per page. Click one to open its note at that day.
 
 ### Archive
 
 <img src="images/06-home-archive.png" alt="Home, Archive" width="720">
 
-All notes in the order they were **created** (newest first; editing never reshuffles them), 20 per page. Type any page number to jump; a page past the end says which page is the last. **Search** looks through titles.
+All notes in the order they were **created** (newest first; editing never reshuffles them), 20 per page. **Search** looks through titles.
+
+**Pages** (Notes and Archive): **← Prev** and **Next →** step one page. Click **Page x of y** to type a page number and press **Enter** to go there (Esc cancels). A page past the end shows an empty list that says the page does not exist and which page is the last.
 
 Which tab opens first is set under **Settings → Preferences → Open on**; clicking Home always brings you back there.
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { HomeTab } from "@/shared/limits";
+import { useLiveSetting, useLiveUser } from "@/client/lib/live-user";
 import { OverviewTab } from "./OverviewTab";
 import { NotesTab } from "./NotesTab";
 import { ArchiveTab } from "./ArchiveTab";
@@ -13,21 +14,24 @@ const TABS: { id: HomeTab; label: string }[] = [
   { id: "archive", label: "Archive" },
 ];
 
-export function Home({ username, initialTab }: { username: string; initialTab: HomeTab }) {
-  const [tab, setTab] = useState<HomeTab>(initialTab);
+export function Home({ username, initialTab, explicitTab }: { username: string; initialTab: HomeTab; explicitTab: boolean }) {
+  const openOn = useLiveSetting("homeTab", initialTab);
+  const liveName = useLiveUser({ username, avatarVersion: null }).username;
+  const startTab = explicitTab ? initialTab : openOn;
+  const [tab, setTab] = useState<HomeTab>(startTab);
   const [error, setError] = useState<string | null>(null);
   const w = useWriteToday(setError);
 
   // Home (profile menu or brand) while already here: back to the tab chosen under Preferences → Open on.
   useEffect(() => {
     const reset = () => {
-      setTab(initialTab);
+      setTab(openOn);
       window.history.replaceState(null, "", "/home");
       window.scrollTo({ top: 0, behavior: "smooth" });
     };
     window.addEventListener("lq:home", reset);
     return () => window.removeEventListener("lq:home", reset);
-  }, [initialTab]);
+  }, [openOn]);
 
   function select(t: HomeTab) {
     setTab(t);
@@ -38,7 +42,7 @@ export function Home({ username, initialTab }: { username: string; initialTab: H
     <>
       <div className="page-head">
         <div>
-          <p className="label glyph">Lumen Quill · {username}</p>
+          <p className="label glyph">Lumen Quill · {liveName}</p>
           <h1>Home</h1>
         </div>
         <div className="btn-row">

@@ -22,7 +22,7 @@ export const saveEntrySchema = z.object({
   baseUpdatedAt: z.number().int().nonnegative().nullable().optional(),
 }).strict();
 export const listNotesQuery = z.object({ page: z.string().regex(/^[1-9]\d{0,5}$/).optional(), q: z.string().max(100).optional() }).strict();
-export const timelineQuery = z.object({ cursor: z.string().max(40).optional() }).strict();
+export const timelineQuery = z.object({ page: z.string().regex(/^[1-9]\d{0,5}$/).optional() }).strict();
 
 export const settingsSchema = z.object({
   mode: z.enum(MODES).optional(),

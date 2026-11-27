@@ -48,7 +48,7 @@ Spark allows about **50,000 reads, 20,000 writes and 20,000 deletes per day**, a
 | Autosave | 3 (profile, note, entry) | 3 (note, entry, activity); +1 read/write on the first save of a day (streak) |
 | Home → Overview | ≈ 8 | 0 |
 | Home → Archive page | 21 (count + 20); deeper pages also pay for skipped rows | 0 |
-| Home → Notes page | ≤ 41 | 0 |
+| Home → Notes page | ≤ 41 (count + 20 entries + their notes); deeper pages also pay for skipped rows | 0 |
 | Open a note | 1 + its days | 0 |
 | Import | ≈ 1 per 30 notes (duplicate check) | 1 per note + 1 per day + 1 |
 | Export everything | every note and day | 0 |

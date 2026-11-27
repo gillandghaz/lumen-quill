@@ -83,7 +83,7 @@ A full review of the code, the configuration and the live providers (not a penet
 | # | Finding | Impact | Status |
 |---|---|---|---|
 | A1 | Sign-in wrote a rate-limit counter **before** verifying the ID token | Anyone could spend the daily write quota with junk tokens | **Fixed**: token verified first; only genuine tokens reach the database |
-| A2 | Search (500-note scan), deep archive pages (offset reads) and export could be repeated freely | One account could exhaust the daily read quota for everyone | **Fixed**: search scans 300 and is limited to 20 / 10 min; deep pages and statistics share a heavy-read limit; export 10 / hour |
+| A2 | Search (500-note scan), deep archive / notes pages (offset reads) and export could be repeated freely | One account could exhaust the daily read quota for everyone | **Fixed**: search scans 300 and is limited to 20 / 10 min; deep pages and statistics share a heavy-read limit; export 10 / hour |
 | A3 | Admin account list called `getUsers` with more than 100 ids | Error beyond 100 accounts | **Fixed**: batches of 100 |
 | A4 | CSP allowed an unused image host | Needless surface | **Fixed**: removed |
 | A5 | Browser API key usable from any site for 27 Google APIs | Abuse of the project's quotas from elsewhere | **Fixed**: referrer-restricted, two APIs; verified that other sites get "referer blocked" |

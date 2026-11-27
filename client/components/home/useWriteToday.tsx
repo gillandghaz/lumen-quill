@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Portal } from "../Portal";
 import { useRouter } from "next/navigation";
 import { api, errorText } from "@/client/lib/api";
+import { liveSetting } from "@/client/lib/live-user";
 import { shortDayLabel } from "@/shared/day";
 import type { NextDayBehavior } from "@/shared/limits";
 
@@ -52,8 +53,10 @@ export function useWriteToday(onError: (msg: string) => void) {
       if (!t.latest) return void (await newNote());
       // Same day: the only choice is to carry on. A later day: continue (new section) or a new note.
       if (t.writtenToday) return router.push(`/notes/${t.latest.id}`);
-      if (t.nextDay === "continue") return router.push(`/notes/${t.latest.id}?continue=1`);
-      if (t.nextDay === "new") return void (await newNote());
+      // a change made in Preferences a moment ago wins over a briefly cached profile on another server instance
+      const nextDay = liveSetting("nextDay") ?? t.nextDay;
+      if (nextDay === "continue") return router.push(`/notes/${t.latest.id}?continue=1`);
+      if (nextDay === "new") return void (await newNote());
       setAsk(t);
       setBusy(false);
     } catch (e) {

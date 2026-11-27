@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { PageUser } from "@/server/page-guards";
+import { useLiveUser } from "@/client/lib/live-user";
 import { AccountTab } from "./AccountTab";
 import { PreferencesTab } from "./PreferencesTab";
 import { DataTab } from "./DataTab";
@@ -9,7 +10,8 @@ import { AdminTab } from "./admin/AdminTab";
 
 export type SettingsTab = "account" | "preferences" | "data" | "admin";
 
-export function SettingsShell({ user, initialTab }: { user: PageUser; initialTab: SettingsTab }) {
+export function SettingsShell({ user: serverUser, initialTab }: { user: PageUser; initialTab: SettingsTab }) {
+  const user = useLiveUser(serverUser);
   const [tab, setTab] = useState<SettingsTab>(initialTab);
   const tabs: { id: SettingsTab; label: string }[] = [
     { id: "account", label: "Account" },

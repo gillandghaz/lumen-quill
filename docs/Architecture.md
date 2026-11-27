@@ -73,6 +73,8 @@ Reads run steps 2 and 5. Admin endpoints also require the verified custom claim 
 | Server instance | user profile | 15 s | any change to that profile on the same instance |
 | Server instance | session revocation check | 60 s | sign out everywhere / disable on the same instance |
 
+The router and profile caches can briefly hold the account as it was before a change. So every change made in this tab (Preferences, username, photo) is also kept in `client/lib/live-user.ts`, in memory plus sessionStorage for 2 minutes, and wins over that older data. Settings, Home, the profile menu, the text size and **Write today** read through it. The mode comes from its cookie first, which is written on every change and at sign-in. Sign-in and sign-out clear it.
+
 API responses stay `Cache-Control: no-store`, so nothing private is written to disk caches. Note links do not prefetch (each prefetch would be a server render).
 
 ## 6. Autosave
