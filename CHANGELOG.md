@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.2 · 2026-11-28
+
+Security:
+- **CodeQL code scanning** is on (JavaScript/TypeScript and GitHub Actions, extended queries). Its first scan found three alerts, all fixed:
+  - The admin bootstrap script no longer prints the admin username, only the account id.
+  - A test helper decoded HTML entities in the wrong order. It now drops the tags first and decodes every entity in a single pass. This was test code only.
+
 ## 1.0.1 · 2026-11-28
 
 Fixes:

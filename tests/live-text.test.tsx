@@ -4,7 +4,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { LiveText } from "@/client/components/LiveText";
 
 const html = (text: string) => renderToStaticMarkup(createElement(LiveText, { text }));
-const plain = (h: string) => h.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#x27;/g, "'");
+// Text content of the rendered markup: drop the tags, then decode the entities in one pass.
+const ENTITIES: Record<string, string> = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#x27;": "'" };
+const plain = (h: string) => h.split(/<[^>]*>/).join("").replace(/&(?:amp|lt|gt|quot|#x27);/g, (e) => ENTITIES[e] ?? e);
 
 describe("live formatting mirror", () => {
   // The mirror must contain exactly the typed characters, or the caret of the textarea on top would drift.

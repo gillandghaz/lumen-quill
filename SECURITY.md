@@ -29,5 +29,6 @@ Revoke or rotate it at the provider **first**, then clean the history. Removing 
 | Headers | Nonce CSP, HSTS preload, `frame-ancestors 'none'`, nosniff, COOP, CORP |
 | Secrets | Outside the repo; gitleaks in CI (full history) and pre-commit |
 | Dependencies | Exact pins, `npm audit` (any severity), OSV-Scanner, Dependabot |
+| Code | CodeQL code scanning (extended queries) |
 
 Threat model, provider settings and the latest audit: [docs/Security.md](docs/Security.md).
