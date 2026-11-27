@@ -1,0 +1,12 @@
+#!/bin/sh
+# Optional local hook: refuse commits that contain secrets. Install: git config core.hooksPath scripts/hooks
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks git --pre-commit --staged --redact --no-banner --exit-code 1 || { echo "gitleaks: possible secret in staged changes. Commit refused."; exit 1; }
+fi
+for f in $(git diff --cached --name-only); do
+  case "$f" in
+    .env|.env.*) [ "$f" = ".env.example" ] || { echo "Refusing to commit $f"; exit 1; } ;;
+    *.pem|*service-account*.json|*firebase-adminsdk*.json) echo "Refusing to commit $f"; exit 1 ;;
+  esac
+done
+exit 0

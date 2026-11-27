@@ -1,0 +1,38 @@
+{
+  "name": "lumen-archive",
+  "version": "0.1.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "description": "Lumen Archive: a private, dated note archive (Next.js, Firebase Auth + Firestore, Vercel)",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "audit:deps": "npm audit --audit-level=low"
+  },
+  "dependencies": {
+    "@firebase/app": "0.16.7",
+    "@firebase/auth": "1.13.11",
+    "firebase-admin": "14.5.1",
+    "next": "16.4.6",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.4",
+    "@types/react": "19.3.3",
+    "@types/react-dom": "19.3.0",
+    "eslint": "10.15.0",
+    "typescript": "npm:@typescript/typescript6@6.0.2",
+    "typescript-eslint": "8.74.0",
+    "vitest": "5.1.2"
+  }
+}

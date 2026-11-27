@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# build
+.next/
+out/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# secrets: NEVER commit. Local secrets live OUTSIDE the repo (node --env-file=<file>).
+.env
+.env.*
+!.env.example
+*.pem
+*service-account*.json
+*-firebase-adminsdk-*.json
+
+# logs / tooling
+npm-debug.log*
+firebase-debug.log*
+firestore-debug.log*
+.vercel/
+.DS_Store
+Thumbs.db

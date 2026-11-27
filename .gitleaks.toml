@@ -1,0 +1,12 @@
+# gitleaks configuration (CI job `gitleaks` and the pre-commit hook scripts/hooks/pre-commit).
+# Default rules apply. Only obviously fake test values are allow-listed; never whole files or folders.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Fake secrets used in tests (not credentials)"
+regexes = [
+  '''^c{40}$''',
+  '''^s{32}$''',
+  '''^x{32}$''',
+]
