@@ -462,3 +462,7 @@ label.btn[aria-disabled="true"] { opacity: 0.6; pointer-events: none; }
 .editor-today.editor-rendered { min-height: 14rem; }
 .editor-today.editor-rendered:hover { border-color: var(--line-strong); }
 .editor-locked.editor-rendered { cursor: default; }
+
+/* Dialogs live in <body> (Portal) and are always centred on the screen; very short screens scroll inside. */
+.modal-backdrop { position: fixed; inset: 0; z-index: 60; overflow-y: auto; }
+.modal { max-height: calc(100vh - 2rem); overflow-y: auto; margin: auto; }
