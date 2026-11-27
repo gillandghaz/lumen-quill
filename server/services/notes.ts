@@ -174,8 +174,10 @@ export async function saveEntry(
   const noteRef = notes(db).doc(noteId);
   const entryRef = entries(db, noteId).doc(day);
   let delta: { words: number; created: boolean } | null = null;
+  let emptied = false;
   const result = await db.runTransaction(async (tx) => {
     delta = null;
+    emptied = false;
     const [ns, es] = await Promise.all([tx.get(noteRef), tx.get(entryRef)]);
     const n = ns.data() as NoteDoc | undefined;
     if (!ns.exists || !n || n.ownerUid !== uid) throw new HttpError(404, "not_found");
@@ -185,6 +187,10 @@ export async function saveEntry(
       throw new HttpError(409, "conflict", { public: { updatedAt: prev.updatedAt } });
     }
     if (!prev && body.trim() === "") return { entry: null, note: toMeta(noteId, n) }; // nothing to create yet
+    if (prev && body.trim() === "") {
+      emptied = true; // today's text was cleared: the section goes away (done below, it needs a query)
+      return { entry: null, note: toMeta(noteId, n) };
+    }
     if (!prev && (n.entryCount ?? 0) >= LIMITS.entriesPerNote) throw new HttpError(409, "entry_limit");
 
     const words = wordCount(body);
@@ -207,6 +213,7 @@ export async function saveEntry(
     tx.set(noteRef, next);
     return { entry, note: toMeta(noteId, next) };
   });
+  if (emptied) return { entry: null, note: await deleteEntry(db, uid, noteId, day, now) };
   const d = delta as { words: number; created: boolean } | null;
   if (d) await recordActivity(db, day, { saves: 1, newEntries: d.created ? 1 : 0, words: d.words });
   return result;
@@ -240,6 +247,36 @@ export async function deleteEntry(db: Firestore, uid: string, noteId: string, da
   return toMeta(noteId, { ...meta, ...patch });
 }
 
+/**
+ * Delete a note only if nothing was ever written in it (no dated section). Used when leaving a note that stayed
+ * empty; checked inside a transaction so a note that just received text is never removed.
+ */
+export async function deleteNoteIfEmpty(db: Firestore, uid: string, noteId: string): Promise<boolean> {
+  const ref = notes(db).doc(noteId);
+  return db.runTransaction(async (tx) => {
+    const [snap, any] = await Promise.all([tx.get(ref), tx.get(ref.collection(COLLECTIONS.entries).limit(1))]);
+    const n = snap.data() as NoteDoc | undefined;
+    if (!snap.exists || !n || n.ownerUid !== uid) throw new HttpError(404, "not_found");
+    if ((n.entryCount ?? 0) > 0 || !any.empty) return false;
+    tx.delete(ref);
+    return true;
+  });
+}
+
+/** Safety net (daily cron): notes still without any writing a day after creation (e.g. the tab was killed). */
+export async function purgeEmptyNotes(db: Firestore, now: number): Promise<number> {
+  const snap = await db.collection(COLLECTIONS.notes).where("entryCount", "==", 0).where("createdAt", "<", now - 24 * 60 * 60 * 1000).limit(200).get();
+  let removed = 0;
+  for (const d of snap.docs) {
+    const any = await d.ref.collection(COLLECTIONS.entries).limit(1).get();
+    if (any.empty) {
+      await d.ref.delete();
+      removed++;
+    }
+  }
+  return removed;
+}
+
 export async function deleteNote(db: Firestore, uid: string, noteId: string): Promise<void> {
   await ownedNote(db, uid, noteId);
   await db.recursiveDelete(notes(db).doc(noteId));
@@ -260,16 +297,18 @@ export async function deleteAllNotes(db: Firestore, uid: string): Promise<number
 }
 
 /** All notes of a user with their entries (export). Bounded by LIMITS.notesPerUser. */
-export async function allNotesPortable(db: Firestore, uid: string, noteId?: string): Promise<PortableNote[]> {
+/** Notes for export, in the Archive's order: when each note was created, newest first. */
+export async function allNotesPortable(db: Firestore, uid: string, noteId?: string): Promise<(PortableNote & { createdAt: number })[]> {
   if (noteId) {
     const { note, entries: list } = await getNote(db, uid, noteId);
-    return [{ title: note.title, entries: list.map((e) => ({ day: e.day, body: e.body })) }];
+    return [{ title: note.title, createdAt: note.createdAt, entries: list.map((e) => ({ day: e.day, body: e.body })) }];
   }
-  const snap = await notes(db).where("ownerUid", "==", uid).orderBy("updatedAt", "desc").limit(LIMITS.notesPerUser).get();
-  const out: PortableNote[] = [];
+  const snap = await notes(db).where("ownerUid", "==", uid).orderBy("createdAt", "desc").limit(LIMITS.notesPerUser).get();
+  const out: (PortableNote & { createdAt: number })[] = [];
   for (const d of snap.docs) {
+    const n = d.data() as NoteDoc;
     const es = await d.ref.collection(COLLECTIONS.entries).orderBy("day", "asc").get();
-    out.push({ title: (d.data() as NoteDoc).title, entries: es.docs.map((e) => ({ day: e.data()["day"], body: e.data()["body"] })) });
+    out.push({ title: n.title, createdAt: n.createdAt, entries: es.docs.map((e) => ({ day: e.data()["day"], body: e.data()["body"] })) });
   }
   return out;
 }
