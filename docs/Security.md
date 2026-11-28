@@ -70,6 +70,8 @@ Checked on 28 November 2026.
 | Firestore | Rules | Deny all clients |
 | Vercel | Secret variables | `sensitive`; production only; previews fail closed |
 | GitHub | Dependabot alerts and security updates | On |
+| GitHub | Code scanning | CodeQL default setup (JavaScript/TypeScript, Actions), extended queries |
+| GitHub | Secret scanning | On, with push protection |
 | GitHub | Actions | Token read-only; cannot approve PRs; only GitHub-owned actions and the OSV action allowed (pinned by SHA) |
 | GitHub | Merge | Merge or squash; branches deleted after merge; no auto-merge |
 | GitHub | Rulesets | Defined in `.github/rulesets/`: `main` needs a PR and green CI, no force push or deletion; `v*` tags immutable; `release/*` protected. Enforced once the repository is public, via `scripts/apply-rulesets.mjs` |

@@ -72,5 +72,5 @@ await db.runTransaction(async (tx) => {
 });
 // The new claim applies to fresh tokens only: sign out of everything once.
 await auth.revokeRefreshTokens(user.uid);
-console.log(`Admin ready: ${username} (uid ${user.uid}). Sign in with Google or set a password under Account.`);
+console.log(`Admin ready (uid ${user.uid}). Sign in with Google or set a password under Account.`);
 process.exit(0);
