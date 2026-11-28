@@ -1,8 +1,85 @@
-Copyright (c) 2026 Lumen Quill. All rights reserved.
+Hak Cipta (c) 2026 pencipta Lumen Quill. Seluruh hak dilindungi.
+Copyright (c) 2026 the author of Lumen Quill. All rights reserved.
 
-The source code in this repository is published for reference only. No licence is granted: you may not use,
-copy, modify, merge, publish, distribute, sublicense or sell any part of it, or run it as a service, without the
-prior written permission of the copyright holder.
+================================================================================
+BAHASA INDONESIA
+================================================================================
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED. IN NO EVENT SHALL THE
-COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE SOFTWARE OR ITS USE.
+Perangkat lunak ini beserta seluruh kode sumber, dokumentasi, desain, tampilan
+(termasuk mode Sonata dan Palace), logo, nama "Lumen Quill", aset, dan berkas
+terkait ("Perangkat Lunak") adalah milik pemegang hak cipta dan DILINDUNGI
+undang-undang, termasuk Undang-Undang Republik Indonesia Nomor 28 Tahun 2014
+tentang Hak Cipta.
+
+Repositori ini dapat dilihat publik HANYA sebagai rujukan. Ini BUKAN perangkat
+lunak sumber terbuka. Tidak ada lisensi yang diberikan, baik tersurat maupun
+tersirat. Tanpa izin TERTULIS sebelumnya dari pemegang hak cipta, siapa pun
+DILARANG:
+
+  1. menyalin, memperbanyak, atau mendistribusikan Perangkat Lunak, seluruhnya
+     maupun sebagian;
+  2. menggunakan kembali, memodifikasi, atau membuat karya turunan dari
+     Perangkat Lunak;
+  3. memakai Perangkat Lunak untuk tujuan komersial maupun nonkomersial,
+     termasuk menjalankannya sebagai layanan;
+  4. menjual, menyewakan, mensublisensikan, atau mengalihkan Perangkat Lunak;
+  5. memakai nama "Lumen Quill", logo, atau desain tampilannya.
+
+Hak yang timbul dari Ketentuan Layanan GitHub untuk repositori publik (melihat
+dan melakukan fork di dalam GitHub) tidak memberikan hak apa pun di luar itu.
+Akses ke repositori (misalnya sebagai kolaborator) juga tidak memberikan hak di
+atas, kecuali dinyatakan tertulis oleh pemegang hak cipta.
+
+Kontribusi (pull request, patch) dari pihak luar tidak diterima tanpa
+perjanjian tertulis sebelumnya.
+
+PERANGKAT LUNAK DISEDIAKAN "SEBAGAIMANA ADANYA", TANPA JAMINAN APA PUN. PEMEGANG
+HAK CIPTA TIDAK BERTANGGUNG JAWAB ATAS KERUGIAN APA PUN YANG TIMBUL DARI
+PENGGUNAAN PERANGKAT LUNAK.
+
+Komponen pihak ketiga tetap tunduk pada lisensinya masing-masing: pustaka di
+package.json (lihat lisensi tiap paket), serta font Inter, Rajdhani, Cinzel,
+Cormorant Garamond, dan JetBrains Mono (SIL Open Font License 1.1) yang
+disertakan saat build.
+
+Permintaan izin: hubungi pemilik repositori secara pribadi melalui GitHub.
+
+================================================================================
+ENGLISH
+================================================================================
+
+This software and all of its source code, documentation, designs, interface
+(including the Sonata and Palace modes), logo, the name "Lumen Quill", assets and
+related files (the "Software") are the property of the copyright holder and are
+PROTECTED by law, including Law of the Republic of Indonesia No. 28 of 2014 on
+Copyright.
+
+This repository is publicly visible FOR REFERENCE ONLY. It is NOT open-source
+software. No licence is granted, express or implied. Without the PRIOR WRITTEN
+permission of the copyright holder, no one may:
+
+  1. copy, reproduce or distribute the Software, in whole or in part;
+  2. reuse, modify or create derivative works of the Software;
+  3. use the Software for commercial or non-commercial purposes, including
+     running it as a service;
+  4. sell, rent, sublicense or transfer the Software;
+  5. use the name "Lumen Quill", its logo or its interface designs.
+
+The rights that GitHub's Terms of Service grant for public repositories (viewing
+and forking within GitHub) do not grant any right beyond that. Access to the
+repository (for example as a collaborator) does not grant the rights above
+either, unless the copyright holder states so in writing.
+
+Contributions (pull requests, patches) from third parties are not accepted
+without a prior written agreement.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. IN NO EVENT SHALL
+THE COPYRIGHT HOLDER BE LIABLE FOR ANY DAMAGES ARISING FROM THE USE OF THE
+SOFTWARE.
+
+Third-party components remain under their own licences: the libraries in
+package.json (see each package's licence), and the fonts Inter, Rajdhani, Cinzel,
+Cormorant Garamond and JetBrains Mono (SIL Open Font License 1.1) bundled at
+build time.
+
+Permission requests: contact the repository owner privately through GitHub.
