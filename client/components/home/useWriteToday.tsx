@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Portal } from "../Portal";
 import { useRouter } from "next/navigation";
 import { api, errorText } from "@/client/lib/api";
@@ -28,22 +28,27 @@ export function useWriteToday(onError: (msg: string) => void) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [ask, setAsk] = useState<Target | null>(null);
+  const busyRef = useRef(false);
 
   async function newNote() {
+    if (busyRef.current) return; // one click = one note
+    busyRef.current = true;
     setBusy(true);
     try {
       const n = await api<NoteMeta>("/api/notes", { method: "POST", body: {} });
       router.push(`/notes/${n.id}`);
     } catch (e) {
       onError(errorText(e));
+      busyRef.current = false;
       setBusy(false);
     }
   }
 
   async function write() {
+    if (busyRef.current) return;
     setBusy(true);
     try {
-      const t = await api<Target>("/api/notes/write-target");
+      const t = await api<Target>("/api/notes/write-target", { fresh: true });
       if (!t.latest) return void (await newNote());
       // Same day: the only choice is to carry on. A later day: continue (new section) or a new note.
       if (t.writtenToday) return router.push(`/notes/${t.latest.id}`);
@@ -65,11 +70,11 @@ export function useWriteToday(onError: (msg: string) => void) {
         <h2 id="ask-title">Continue or begin anew?</h2>
         <p className="muted">Your latest note, <strong>{ask.latest.title}</strong>, was last written on {ask.latest.lastDay ? shortDayLabel(ask.latest.lastDay) : "an earlier day"}.</p>
         <div className="choice-grid">
-          <button className="choice" type="button" onClick={() => router.push(`/notes/${ask.latest!.id}?continue=1`)}>
+          <button className="choice" type="button" disabled={busy} onClick={() => { setBusy(true); router.push(`/notes/${ask.latest!.id}?continue=1`); }}>
             <strong>Continue “{ask.latest.title}”</strong>
             <span className="muted">Adds a section for today below the earlier days, which stay locked.</span>
           </button>
-          <button className="choice" type="button" onClick={() => { setAsk(null); void newNote(); }}>
+          <button className="choice" type="button" disabled={busy} onClick={() => { setAsk(null); void newNote(); }}>
             <strong>Start a new note</strong>
             <span className="muted">A separate note that begins today.</span>
           </button>

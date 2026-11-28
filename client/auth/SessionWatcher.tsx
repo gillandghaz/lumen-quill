@@ -2,8 +2,9 @@
 
 import { useEffect } from "react";
 
-const POLL_MS = 60_000;
-const MIN_GAP_MS = 10_000;
+/** Every 5 minutes while visible (each check reads the profile once); every API call re-checks the session anyway. */
+const POLL_MS = 5 * 60_000;
+const MIN_GAP_MS = 60_000;
 
 /**
  * Keeps the session honest: when the server answers 401 (account disabled, session revoked or expired) the user is

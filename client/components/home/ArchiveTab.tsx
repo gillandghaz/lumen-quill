@@ -86,7 +86,7 @@ export function ArchiveTab({ onWrite }: { onWrite: () => void }) {
       ) : (
         <div className={`note-list${busy ? " is-busy" : ""}`}>
           {data.items.map((n) => (
-            <Link key={n.id} href={`/notes/${n.id}`} className="note-card">
+            <Link key={n.id} prefetch={false} href={`/notes/${n.id}`} className="note-card">
               <span className="note-title trunc">{n.title}</span>
               <span className="note-meta">created {new Date(n.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })} · {n.entryCount} {n.entryCount === 1 ? "day" : "days"} · {n.words} words</span>
             </Link>

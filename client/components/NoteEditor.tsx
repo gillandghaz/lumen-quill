@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { api, ApiError, downloadFrom, errorText } from "@/client/lib/api";
+import { api, ApiError, clearApiCache, errorText } from "@/client/lib/api";
 import { dayLabel } from "@/shared/day";
 import { LIMITS } from "@/shared/limits";
 import { byteLength, wordCount } from "@/shared/text";
 import { ConfirmDialog } from "./Modal";
+import { ExportButton } from "./ExportButton";
 import { Markdown } from "./Markdown";
 import { LiveText } from "./LiveText";
 import { confirmLeave, setPending } from "@/client/lib/unsaved";
@@ -46,6 +47,7 @@ export function NoteEditor({ id, continueToday }: { id: string; continueToday: b
     const dropIfEmpty = () => {
       if (entryCountRef.current === 0 && !hasTextRef.current) {
         entryCountRef.current = null; // once
+        clearApiCache();
         void fetch(`/api/notes/${id}?ifEmpty=1`, { method: "DELETE", credentials: "same-origin", keepalive: true });
       }
     };
@@ -58,7 +60,7 @@ export function NoteEditor({ id, continueToday }: { id: string; continueToday: b
 
   useEffect(() => {
     let alive = true;
-    api<NoteData>(`/api/notes/${id}`)
+    api<NoteData>(`/api/notes/${id}`, { fresh: true })
       .then((d) => {
         if (!alive) return;
         setData(d);
@@ -105,8 +107,8 @@ export function NoteEditor({ id, continueToday }: { id: string; continueToday: b
         <label className="sr-only" htmlFor="title">Title</label>
         <input id="title" className="title-input" value={title} maxLength={LIMITS.titleChars} onChange={(e) => setTitle(e.target.value)} onBlur={() => void saveTitle()} onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }} />
         <div className="btn-row">
-          <button className="btn btn-sm btn-ghost" type="button" onClick={() => downloadFrom(`/api/data/export?format=md&noteId=${id}`)}>Export .md</button>
-          <button className="btn btn-sm btn-ghost" type="button" onClick={() => downloadFrom(`/api/data/export?format=txt&noteId=${id}`)}>.txt</button>
+          <ExportButton href={`/api/data/export?format=md&noteId=${id}`} label="Export .md" />
+          <ExportButton href={`/api/data/export?format=txt&noteId=${id}`} label=".txt" />
           <button className="btn btn-sm btn-danger" type="button" onClick={() => setAsk({ kind: "note" })}>Delete</button>
         </div>
       </div>
@@ -189,7 +191,14 @@ function SaveBadge({ state }: { state: SaveState }) {
   );
 }
 
-const DEBOUNCE_MS = 1200;
+/**
+ * Autosave cost control: save after a 2.5 s pause, at most once every 10 s while typing continuously, and always
+ * on blur / leaving. A failed save retries with a growing delay (5 s → 2 min) and stops after 8 tries (the badge
+ * shows "Not saved"), so a broken connection or a full quota never turns into a request loop.
+ */
+const DEBOUNCE_MS = 2500;
+const MIN_INTERVAL_MS = 10_000;
+const MAX_RETRIES = 8;
 
 /**
  * Today's text: debounced autosave, retry when offline, last-chance save on page hide, and a guard against two tabs
@@ -214,7 +223,17 @@ function TodayEditor({ noteId, day, initialBody, initialUpdatedAt, onSaved, onSt
   const latest = useRef(start);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inFlight = useRef(false);
+  const lastSave = useRef(0);
+  const retries = useRef(0);
   const key = `${noteId}/${day}`;
+
+  /** Schedule the next save: after a pause, but never sooner than MIN_INTERVAL_MS after the previous one. */
+  const schedule = useCallback((delay = DEBOUNCE_MS) => {
+    if (timer.current) clearTimeout(timer.current);
+    const wait = Math.max(delay, MIN_INTERVAL_MS - (Date.now() - lastSave.current));
+    timer.current = setTimeout(() => { timer.current = null; void saveRef.current(); }, wait);
+  }, []);
+  const saveRef = useRef<() => Promise<void>>(async () => undefined);
 
   useEffect(() => {
     onState(state);
@@ -251,29 +270,37 @@ function TodayEditor({ noteId, day, initialBody, initialUpdatedAt, onSaved, onSt
     if (text === saved.current) return;
     if (byteLength(text) > LIMITS.entryBytes) return setState("error");
     inFlight.current = true;
+    lastSave.current = Date.now();
     setState("saving");
     try {
       const r = await api<{ entry: Entry | null; note: NoteMeta }>(`/api/notes/${noteId}/entries/${day}`, { method: "PUT", body: { body: text, baseUpdatedAt: base.current } });
       saved.current = text;
       if (r.entry) base.current = r.entry.updatedAt;
       onSaved(r.note);
+      retries.current = 0;
       setState(latest.current === text ? "saved" : "dirty");
     } catch (e) {
       if (e instanceof ApiError && (e.code === "conflict" || e.code === "day_locked")) {
         setState("conflict");
       } else {
         setState("error");
-        timer.current = setTimeout(() => { timer.current = null; void save(); }, 5000);
+        retries.current += 1;
+        if (retries.current <= MAX_RETRIES) {
+          const backoff = Math.min(120_000, 5000 * 2 ** (retries.current - 1));
+          timer.current = setTimeout(() => { timer.current = null; void saveRef.current(); }, backoff);
+        }
       }
     } finally {
       inFlight.current = false;
     }
-    if (latest.current !== saved.current && !timer.current) timer.current = setTimeout(() => { timer.current = null; void save(); }, DEBOUNCE_MS);
-  }, [noteId, day, onSaved]);
+    if (latest.current !== saved.current && !timer.current && retries.current === 0) schedule();
+  }, [noteId, day, onSaved, schedule]);
+  saveRef.current = save;
 
   useEffect(() => {
     const flush = () => {
       if (latest.current !== saved.current) {
+        clearApiCache();
         void fetch(`/api/notes/${noteId}/entries/${day}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -309,10 +336,10 @@ function TodayEditor({ noteId, day, initialBody, initialUpdatedAt, onSaved, onSt
           setBody(e.target.value);
           latest.current = e.target.value;
           setState(e.target.value === saved.current ? "saved" : "dirty");
-          if (timer.current) clearTimeout(timer.current);
-          timer.current = setTimeout(() => { timer.current = null; void save(); }, DEBOUNCE_MS);
+          retries.current = 0;
+          schedule();
         }}
-        onBlur={() => void save()}
+        onBlur={() => { if (timer.current) { clearTimeout(timer.current); timer.current = null; } void save(); }}
       />
       </div>
       <div className="entry-tools">

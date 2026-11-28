@@ -16,7 +16,7 @@ export function buildCsp(nonce: string, dev: boolean): string {
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://apis.google.com${dev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https://lh3.googleusercontent.com",
+    "img-src 'self' data: blob:",
     "font-src 'self'",
     "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://apis.google.com" +
       authDomain + (dev ? " ws: http://localhost:*" : ""),

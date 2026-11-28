@@ -4,6 +4,11 @@ import { HttpError } from "../errors";
 export interface RateRule {
   limit: number;
   windowMs: number;
+  /**
+   * Counted in this server instance's memory instead of Firestore. For very frequent, low-risk calls (autosave of
+   * your own text): a Firestore counter would cost one read + one write per keystroke pause.
+   */
+  local?: boolean;
 }
 
 /** Shared counter store (serverless instances share nothing in memory). */
@@ -12,44 +17,7 @@ export interface RateStore {
   hit(id: string, now: number, windowMs: number): Promise<{ count: number; windowStart: number }>;
 }
 
-/**
- * Fixed-window rate limiter. Keys are hashed with a server secret, so raw IPs / uids are never stored.
- */
-export class RateLimiter {
-  constructor(
-    private readonly store: RateStore,
-    private readonly secret: string,
-    private readonly now: () => number,
-  ) {}
-
-  async hit(scope: string, key: string, rule: RateRule): Promise<void> {
-    const id = createHash("sha256").update(`${this.secret}|${scope}|${key}`).digest("hex");
-    const t = this.now();
-    const { count, windowStart } = await this.store.hit(id, t, rule.windowMs);
-    if (count > rule.limit) {
-      throw new HttpError(429, "rate_limited", { retryAfterSec: Math.max(1, Math.ceil((windowStart + rule.windowMs - t) / 1000)) });
-    }
-  }
-}
-
-export const RULES = {
-  session: { limit: 20, windowMs: 10 * 60_000 },
-  /** Autosave writes; generous because the editor saves while typing (debounced). */
-  save: { limit: 600, windowMs: 10 * 60_000 },
-  write: { limit: 120, windowMs: 10 * 60_000 },
-  account: { limit: 10, windowMs: 60 * 60_000 },
-  search: { limit: 120, windowMs: 10 * 60_000 },
-  export: { limit: 60, windowMs: 10 * 60_000 },
-  /** Import chunks (≤ 50 notes each): 400 per hour ≈ 20,000 notes, more than the daily Firestore write quota. */
-  import: { limit: 400, windowMs: 60 * 60_000 },
-  destructive: { limit: 10, windowMs: 60 * 60_000 },
-  adminChange: { limit: 60, windowMs: 10 * 60_000 },
-  backup: { limit: 300, windowMs: 10 * 60_000 },
-} satisfies Record<string, RateRule>;
-
-export type RuleName = keyof typeof RULES;
-
-/** In-memory store (tests and local development only). */
+/** In-memory store: tests, and rules marked `local`. */
 export class MemoryRateStore implements RateStore {
   private readonly m = new Map<string, { count: number; windowStart: number }>();
   async hit(id: string, now: number, windowMs: number) {
@@ -59,3 +27,46 @@ export class MemoryRateStore implements RateStore {
     return next;
   }
 }
+
+/**
+ * Fixed-window rate limiter. Keys are hashed with a server secret, so raw IPs / uids are never stored.
+ */
+export class RateLimiter {
+  private readonly localStore = new MemoryRateStore();
+
+  constructor(
+    private readonly store: RateStore,
+    private readonly secret: string,
+    private readonly now: () => number,
+  ) {}
+
+  async hit(scope: string, key: string, rule: RateRule): Promise<void> {
+    const id = createHash("sha256").update(`${this.secret}|${scope}|${key}`).digest("hex");
+    const t = this.now();
+    const { count, windowStart } = await (rule.local ? this.localStore : this.store).hit(id, t, rule.windowMs);
+    if (count > rule.limit) {
+      throw new HttpError(429, "rate_limited", { retryAfterSec: Math.max(1, Math.ceil((windowStart + rule.windowMs - t) / 1000)) });
+    }
+  }
+}
+
+export const RULES = {
+  session: { limit: 20, windowMs: 10 * 60_000 },
+  /** Autosave writes; generous because the editor saves while typing (debounced). */
+  save: { limit: 600, windowMs: 10 * 60_000, local: true },
+  write: { limit: 120, windowMs: 10 * 60_000 },
+  account: { limit: 10, windowMs: 60 * 60_000 },
+  /** Title search scans up to 300 notes per request. */
+  search: { limit: 20, windowMs: 10 * 60_000 },
+  /** Export reads every note and entry: the most expensive call in the app. */
+  export: { limit: 10, windowMs: 60 * 60_000 },
+  /** Other costly reads: deep archive pages (offset reads skipped rows), admin statistics. */
+  heavyRead: { limit: 30, windowMs: 10 * 60_000 },
+  /** Import chunks (≤ 50 notes each): 400 per hour ≈ 20,000 notes, more than the daily Firestore write quota. */
+  import: { limit: 400, windowMs: 60 * 60_000 },
+  destructive: { limit: 10, windowMs: 60 * 60_000 },
+  adminChange: { limit: 60, windowMs: 10 * 60_000 },
+  backup: { limit: 300, windowMs: 10 * 60_000 },
+} satisfies Record<string, RateRule>;
+
+export type RuleName = keyof typeof RULES;

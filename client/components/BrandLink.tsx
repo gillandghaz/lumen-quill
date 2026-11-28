@@ -11,6 +11,7 @@ export function BrandLink({ href = "/" }: { href?: string }) {
   return (
     <Link
       href={href}
+      prefetch={false}
       className="brand"
       onClick={(e) => {
         e.preventDefault();

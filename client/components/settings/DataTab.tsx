@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { api, downloadFrom, errorText } from "@/client/lib/api";
+import { api, errorText } from "@/client/lib/api";
 import { ImportSection } from "./ImportSection";
+import { ExportButton } from "../ExportButton";
 import { ConfirmDialog } from "../Modal";
 
 export function DataTab({ timeZone }: { timeZone: string }) {
@@ -21,8 +22,8 @@ export function DataTab({ timeZone }: { timeZone: string }) {
           <p className="muted" style={{ margin: 0 }}>Every note in one light file. Each day is a <code>## YYYY-MM-DD</code> section.</p>
         </div>
         <div className="btn-row">
-          <button className="btn btn-primary" type="button" onClick={() => downloadFrom("/api/data/export?format=md")}>.md</button>
-          <button className="btn" type="button" onClick={() => downloadFrom("/api/data/export?format=txt")}>.txt</button>
+          <ExportButton href="/api/data/export?format=md" label=".md" primary />
+          <ExportButton href="/api/data/export?format=txt" label=".txt" />
         </div>
       </section>
 

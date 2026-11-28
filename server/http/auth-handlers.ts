@@ -21,11 +21,13 @@ const ORPHAN_WINDOW_MS = 10 * 60_000;
  */
 export const createSession: Handler = safe(async (req, deps) => {
   assertSameOrigin(req, deps.config.allowedOrigins);
-  await deps.limiter.hit("session", clientIp(req), RULES.session);
   const { idToken, timeZone } = sessionSchema.parse(await body(req, 8192));
 
+  // The token is verified first (cryptographically, no database), so a stranger with junk tokens cannot make the
+  // app write anything. Only a genuine Firebase token reaches the rate limiter and the database.
   const token = await deps.auth.verifyIdToken(idToken);
   if (!token) throw new HttpError(401, "unauthorized");
+  await deps.limiter.hit("session", clientIp(req), RULES.session);
   if (!token.emailVerified) throw new HttpError(403, "email_not_verified");
   if (deps.now() / 1000 - token.authTimeSec > RECENT_SIGNIN_SEC) throw new HttpError(401, "recent_login_required");
 

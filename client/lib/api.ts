@@ -6,8 +6,50 @@ export class ApiError extends Error {
   }
 }
 
-/** JSON API call (same-origin cookie). 401 sends the user to sign-in. */
-export async function api<T>(path: string, init: { method?: string; body?: unknown; signal?: AbortSignal; keepalive?: boolean } = {}): Promise<T> {
+const inflight = new Map<string, Promise<unknown>>();
+
+/**
+ * Short-lived cache of GET answers (60 s, this tab's memory only) so moving between tabs and menus does not read
+ * Firestore again. ANY change (POST / PUT / PATCH / DELETE) empties it, so you never see stale data after an
+ * action; signing out reloads the page, which drops it entirely. Pass `fresh: true` to bypass it.
+ */
+const CACHE_MS = 60_000;
+const cache = new Map<string, { at: number; data: unknown }>();
+export function clearApiCache(): void {
+  cache.clear();
+}
+
+/**
+ * JSON API call (same-origin cookie). 401 sends the user to sign-in.
+ * An identical mutation (same method, path and body) that is still running is shared instead of sent again, so a
+ * double click can never create, delete or import twice.
+ */
+export async function api<T>(path: string, init: { method?: string; body?: unknown; signal?: AbortSignal; keepalive?: boolean; fresh?: boolean } = {}): Promise<T> {
+  const method = (init.method ?? "GET").toUpperCase();
+  if (method === "GET") {
+    const hit = cache.get(path);
+    if (!init.fresh && hit && Date.now() - hit.at < CACHE_MS) return hit.data as T;
+    const running = inflight.get(`GET ${path}`);
+    if (running) return running as Promise<T>;
+    const p = send<T>(path, init)
+      .then((data) => {
+        cache.set(path, { at: Date.now(), data });
+        return data;
+      })
+      .finally(() => inflight.delete(`GET ${path}`));
+    inflight.set(`GET ${path}`, p);
+    return p;
+  }
+  cache.clear();
+  const key = `${method} ${path} ${init.body === undefined ? "" : JSON.stringify(init.body)}`;
+  const running = inflight.get(key);
+  if (running) return running as Promise<T>;
+  const p = send<T>(path, init).finally(() => inflight.delete(key));
+  inflight.set(key, p);
+  return p;
+}
+
+async function send<T>(path: string, init: { method?: string; body?: unknown; signal?: AbortSignal; keepalive?: boolean }): Promise<T> {
   let res: Response;
   try {
     res = await fetch(path, {

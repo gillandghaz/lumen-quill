@@ -55,7 +55,7 @@ export const auditH: Handler = safe(async (req, deps) => {
 
 export const statsH: Handler = safe(async (req, deps) => {
   const a = await requireAdmin(req, deps);
-  await deps.limiter.hit("search", a.identity.uid, RULES.search);
+  await deps.limiter.hit("heavy-read", a.identity.uid, RULES.heavyRead);
   return json(200, await stats(deps));
 });
 

@@ -61,7 +61,7 @@ export function NotesTab({ onWrite }: { onWrite: () => void }) {
           return (
             <div key={`${it.noteId}-${it.day}`}>
               {head}
-              <Link href={`/notes/${it.noteId}#d-${it.day}`} className="timeline-item">
+              <Link prefetch={false} href={`/notes/${it.noteId}#d-${it.day}`} className="timeline-item">
                 <span className="timeline-dot" aria-hidden="true" />
                 <span className="timeline-day">{dayLabel(it.day)}</span>
                 <span className="timeline-note trunc">{it.noteTitle}</span>
