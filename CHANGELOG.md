@@ -32,6 +32,11 @@ First stable release.
 
 **UI:** admin table headers and dates stay on one line.
 
+**Licence:**
+- full bilingual (Indonesian / English) all-rights-reserved terms based on Law No. 28/2014;
+- explicit prohibitions, including the name, logo and designs;
+- the GitHub fork clause, no outside contributions, and the third-party licences (npm packages, SIL OFL fonts).
+
 **README badges** are stored in `docs/badges/` and served by GitHub directly. Before, GitHub's image proxy (camo) loaded them from shields.io and sometimes timed out (HTTP 504, shown as a broken image).
 
 ## 0.3.1 · 2026-11-28
