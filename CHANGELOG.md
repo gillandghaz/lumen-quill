@@ -32,6 +32,8 @@ First stable release.
 
 **UI:** admin table headers and dates stay on one line.
 
+**README badges** are stored in `docs/badges/` and served by GitHub directly. Before, GitHub's image proxy (camo) loaded them from shields.io and sometimes timed out (HTTP 504, shown as a broken image).
+
 ## 0.3.1 · 2026-11-28
 
 - **Live formatting while typing.** `**bold**` and `*italic*` appear bold and italic as you type. The markers stay in place but are smaller and faint, and the caret never shifts (bold is a thicker stroke and italic a slant, so glyph widths stay the same).

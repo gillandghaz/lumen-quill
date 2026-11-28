@@ -6,13 +6,13 @@
 </p>
 
 <p align="center">
-  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs">
-  <img alt="React" src="https://img.shields.io/badge/React-19-149eca?logo=react">
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white">
-  <img alt="Firebase" src="https://img.shields.io/badge/Firebase-Auth%20%2B%20Firestore-ffca28?logo=firebase&logoColor=black">
-  <img alt="Vercel" src="https://img.shields.io/badge/Vercel-sin1-000000?logo=vercel">
-  <img alt="CI" src="https://img.shields.io/badge/CI-lint%20%C2%B7%20tests%20%C2%B7%20gitleaks%20%C2%B7%20OSV-2f6b45">
-  <img alt="License" src="https://img.shields.io/badge/license-all%20rights%20reserved-555">
+  <img alt="Next.js" src="docs/badges/next-js.svg">
+  <img alt="React" src="docs/badges/react.svg">
+  <img alt="TypeScript" src="docs/badges/typescript.svg">
+  <img alt="Firebase" src="docs/badges/firebase.svg">
+  <img alt="Vercel" src="docs/badges/vercel.svg">
+  <img alt="CI" src="docs/badges/ci.svg">
+  <img alt="License" src="docs/badges/license.svg">
 </p>
 
 <p align="center"><img src="docs/images/04-home-overview.png" alt="Lumen Quill Home in the Sonata mode, with sample data" width="900"></p>
