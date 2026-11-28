@@ -20,7 +20,7 @@
    ```
    `npm audit` must report **0 vulnerabilities**.
 4. **Document**: a new entry at the top of `CHANGELOG.md`, the version in `package.json` (`npm version <x.y.z> --no-git-tag-version`), and `README.md` / `SECURITY.md` when behaviour or controls change.
-5. **Commit** in English, [Conventional Commits](https://www.conventionalcommits.org/) style: `feat(scope): ...`, `fix(...)`, `docs(...)`, `chore(...)`, `test(...)`, `ci(...)`. Commit identity in this repository: `Lumen Quill <dev@lumen-quill.invalid>` (no personal e-mail in a public history).
+5. **Commit** in English, [Conventional Commits](https://www.conventionalcommits.org/) style: `feat(scope): ...`, `fix(...)`, `docs(...)`, `chore(...)`, `test(...)`, `ci(...)`. Commit identity in this repository: the owner's GitHub account with its no-reply address (`<id>+<owner>@users.noreply.github.com`, never a personal e-mail), with the trailer `Co-authored-by: Lumen Quill <dev@lumen-quill.invalid>`.
 6. **Pull request** to `main` with the PR template. Wait for CI to be green (`verify`, `osv-scanner`, `gitleaks`), then merge and delete the branch. Vercel deploys `main` automatically; preview deployments are built for every PR.
 
 7. **Release** (owner): tag `vX.Y.Z` on `main`, publish a GitHub Release with the changelog entry, and create `release/X.Y` from the tag.

@@ -30,7 +30,11 @@ First stable release.
 - The owner's username and e-mail are removed from files, screenshots and commit authorship.
 - The `pr-only` CI check no longer raises a false alarm right after a merge.
 
-**UI:** admin table headers and dates stay on one line.
+**UI:**
+- Admin table headers and dates stay on one line.
+- Live italic is clearly slanted while typing. Each word is skewed, and its width is unchanged so the caret stays put; before, the font-based slant was not drawn.
+- Locked days use the real italic faces.
+- The phone screenshot is centred in its block.
 
 **Licence:**
 - full bilingual (Indonesian / English) all-rights-reserved terms based on Law No. 28/2014;

@@ -7,12 +7,12 @@ import { isMode, MODE_COOKIE, type Mode } from "@/shared/limits";
 import { loadPageContext } from "@/server/page-guards";
 
 // Fonts are self-hosted by Next at build time (no runtime request to Google: CSP font-src 'self').
-const inter = Inter({ subsets: ["latin"], variable: "--f-inter", display: "swap" });
+const inter = Inter({ subsets: ["latin"], style: ["normal", "italic"], variable: "--f-inter", display: "swap" });
 const rajdhani = Rajdhani({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--f-rajdhani", display: "swap" });
 const cinzel = Cinzel({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--f-cinzel", display: "swap" });
 const cormorant = Cormorant_Garamond({ subsets: ["latin"], weight: ["400", "500", "600"], style: ["normal", "italic"], variable: "--f-cormorant", display: "swap" });
-// Editor face in Palace: upright only, so live *italic* is a synthetic slant with exactly the same glyph widths
-// as the transparent textarea on top (a real italic face has different widths and would shift the caret).
+// Editor face in Palace: upright only, so the live mirror and the transparent textarea on top have identical glyph
+// widths (live *italic* is a per-word transform, see ui.css). Read-only views use the real italic face above.
 const cormorantUpright = Cormorant_Garamond({ subsets: ["latin"], weight: ["400", "500", "600"], style: ["normal"], variable: "--f-cormorant-upright", display: "swap" });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--f-mono", display: "swap" });
 
