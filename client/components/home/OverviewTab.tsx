@@ -45,7 +45,7 @@ export function OverviewTab({ onWrite, onOpen }: { onWrite: () => void; onOpen: 
         ) : (
           <div className="note-list">
             {d.recent.map((n) => (
-              <Link key={n.id} href={`/notes/${n.id}`} className="note-row">
+              <Link key={n.id} prefetch={false} href={`/notes/${n.id}`} className="note-row">
                 <span className="note-title trunc">{n.title}</span>
                 <span className="note-meta">{n.lastDay ? shortDayLabel(n.lastDay) : "empty"} · {n.words} words</span>
               </Link>

@@ -4,6 +4,7 @@ import { COLLECTIONS } from "../config";
 import { HttpError } from "../errors";
 import { LIMITS, NOTES_PAGE_SIZE, TIMELINE_PAGE_SIZE } from "@/shared/limits";
 import { recordActivity } from "./activity";
+import { forgetProfile } from "./profile";
 import { byteLength, preview, wordCount } from "@/shared/text";
 import { dayKey } from "@/shared/day";
 import type { PortableNote } from "@/shared/markdown-io";
@@ -76,7 +77,7 @@ export async function listNotes(db: Firestore, uid: string, opts: { page?: numbe
   if (opts.q && opts.q.trim()) {
     // Title / preview search over the user's notes (bounded scan; caller rate-limits it).
     const needle = opts.q.trim().toLowerCase();
-    const snap = await mine.orderBy("createdAt", "desc").limit(500).get();
+    const snap = await mine.orderBy("createdAt", "desc").limit(300).get();
     const items = snap.docs.map((d) => toMeta(d.id, d.data() as NoteDoc)).filter((n) => n.title.toLowerCase().includes(needle) || n.preview.toLowerCase().includes(needle)).slice(0, 100);
     return { items, page: 1, pages: 1, total: items.length };
   }
@@ -192,6 +193,15 @@ export async function saveEntry(
       return { entry: null, note: toMeta(noteId, n) };
     }
     if (!prev && (n.entryCount ?? 0) >= LIMITS.entriesPerNote) throw new HttpError(409, "entry_limit");
+    // First words of a new day: extend or restart the writing streak (one extra read + write, once per day).
+    if (!prev) {
+      const userRef = db.collection(COLLECTIONS.users).doc(uid);
+      const w = ((await tx.get(userRef)).get("writing") ?? {}) as { lastDay?: string; streak?: number };
+      if (w.lastDay !== day) {
+        const yesterday = new Date(Date.parse(`${day}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+        tx.set(userRef, { writing: { lastDay: day, streak: w.lastDay === yesterday ? (w.streak ?? 0) + 1 : 1 } }, { merge: true });
+      }
+    }
 
     const words = wordCount(body);
     const bytes = byteLength(body);
@@ -214,6 +224,7 @@ export async function saveEntry(
     return { entry, note: toMeta(noteId, next) };
   });
   if (emptied) return { entry: null, note: await deleteEntry(db, uid, noteId, day, now) };
+  if ((delta as { created: boolean } | null)?.created) forgetProfile(uid); // streak changed
   const d = delta as { words: number; created: boolean } | null;
   if (d) await recordActivity(db, day, { saves: 1, newEntries: d.created ? 1 : 0, words: d.words });
   return result;
@@ -420,28 +431,24 @@ export async function timeline(db: Firestore, uid: string, cursor?: string): Pro
   return { items, nextCursor: snap.docs.length > TIMELINE_PAGE_SIZE && last ? `${last.get("day")}|${last.get("updatedAt")}` : null };
 }
 
-/** Overview numbers for one user: aggregations (cheap) plus the last 60 written days for the streak. */
-export async function overview(db: Firestore, uid: string, today: string) {
+/**
+ * Overview for one user, about 8 reads: three aggregations (one read per 1000 index entries each), the five newest
+ * notes, and the streak kept on the profile (no scan of entries).
+ */
+export async function overview(db: Firestore, uid: string, today: string, writing: { lastDay: string | null; streak: number }) {
   const mine = notes(db).where("ownerUid", "==", uid);
   // Two separate sums: each is served by its own (ownerUid, field) index; one combined sum would need another index.
-  const [count, wordsSum, daysSum, recent, days] = await Promise.all([
+  const [count, wordsSum, daysSum, recent] = await Promise.all([
     mine.count().get(),
     mine.aggregate({ words: AggregateField.sum("words") }).get(),
     mine.aggregate({ days: AggregateField.sum("entryCount") }).get(),
     mine.orderBy("createdAt", "desc").limit(5).get(),
-    db.collectionGroup(COLLECTIONS.entries).where("ownerUid", "==", uid).orderBy("day", "desc").orderBy("updatedAt", "desc").select("day").limit(60).get(),
   ]);
-  const written = new Set(days.docs.map((d) => d.get("day") as string));
-  let streak = 0;
-  for (let t = Date.parse(`${today}T00:00:00Z`); ; t -= 86_400_000) {
-    const k = new Date(t).toISOString().slice(0, 10);
-    if (written.has(k)) streak++;
-    else if (k !== today) break;
-    if (streak > 59) break;
-  }
+  const yesterday = new Date(Date.parse(`${today}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+  const streak = writing.lastDay === today || writing.lastDay === yesterday ? writing.streak : 0;
   return {
     today,
-    writtenToday: written.has(today),
+    writtenToday: writing.lastDay === today,
     notes: count.data().count,
     words: Number(wordsSum.data().words ?? 0),
     days: Number(daysSum.data().days ?? 0),

@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.0.0 · 2026-11-28
+
+First stable release.
+
+**Security audit** (details in [docs/Security.md](docs/Security.md#4-audit-for-100)):
+- Sign-in verifies the Firebase token before any database write, so junk tokens cannot spend the quota.
+- Heavy reads are rate-limited: search (20 / 10 min, scans 300 notes), deep archive pages and statistics (30 / 10 min), export (10 / hour).
+- The admin account list handles more than 100 accounts.
+- The CSP no longer allows an unused image host.
+- The Firebase browser API key is restricted to the app's domains and the two Auth APIs.
+- Dependabot alerts and security updates are on.
+- GitHub Actions have a read-only token and only allowed actions may run. Rulesets for `main`, `release/*` and `v*` tags are kept in `.github/rulesets/`.
+
+**Quota (Firestore reads and writes):**
+- Autosave saves after a 2.5 s pause and at most every 10 s, and its rate limiter lives in memory.
+- The writing streak is stored on the profile, so Overview costs about 8 reads instead of about 68.
+- The session check runs every 5 min instead of every 60 s.
+- Failed saves back off up to 2 min and stop after 8 tries.
+- Note links no longer prefetch.
+- Caching: a 60 s browser cache of reads, emptied by any change; a 30 s router cache; a 15 s server-side profile cache.
+
+**Single click:** busy buttons lock, identical requests in flight are shared, and export locks for a few seconds.
+
+**Documentation:** a new README and an illustrated user guide (sample data only), plus Pages, Architecture, Database, API, Operations, Security (threat model and audit), Troubleshooting, Dependencies, Glossary and Agent.md. A test keeps versions, links, screenshots and the endpoint list consistent.
+
+**Repository:**
+- Published with all rights reserved.
+- The owner's username and e-mail are removed from files, screenshots and commit authorship.
+- The `pr-only` CI check no longer raises a false alarm right after a merge.
+
+**UI:** admin table headers and dates stay on one line.
+
 ## 0.3.1 · 2026-11-28
 
 - **Live formatting while typing.** `**bold**` and `*italic*` appear bold and italic as you type. The markers stay in place but are smaller and faint, and the caret never shifts (bold is a thicker stroke and italic a slant, so glyph widths stay the same).

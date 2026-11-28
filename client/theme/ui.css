@@ -501,3 +501,6 @@ label.btn[aria-disabled="true"] { opacity: 0.6; pointer-events: none; }
 .editor-mirror .md-i { font-style: oblique 10deg; font-synthesis: style; }
 /* Markers stay in place (their width is kept) but look smaller and faint. */
 .editor-mirror .md-mark { display: inline-block; transform: scale(0.72); transform-origin: 50% 70%; opacity: 0.28; font-style: normal; -webkit-text-stroke: 0; }
+
+/* Admin tables: headers and dates on one line. */
+.table th, .table td.small { white-space: nowrap; }

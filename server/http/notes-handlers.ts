@@ -16,6 +16,8 @@ export const listNotesH: Handler = safe(async (req, deps) => {
   const u = await requireUser(req, deps);
   const q = listNotesQuery.parse(query(req));
   if (q.q) await deps.limiter.hit("search", u.identity.uid, RULES.search);
+  // Deep pages read every skipped row (offset), so only they count against the heavy-read budget.
+  else if (q.page && Number(q.page) > 5) await deps.limiter.hit("heavy-read", u.identity.uid, RULES.heavyRead);
   return json(200, await listNotes(deps.db, u.identity.uid, { page: q.page ? Number(q.page) : undefined, q: q.q }));
 });
 
@@ -77,7 +79,7 @@ export const deleteEntryH: Handler = safe(async (req, deps, p) => {
 /** Home → Overview: personal totals, streak and the five most recent notes. */
 export const overviewH: Handler = safe(async (req, deps) => {
   const u = await requireUser(req, deps);
-  return json(200, await overview(deps.db, u.identity.uid, todayFor(u.profile.settings.timeZone, deps.now())));
+  return json(200, await overview(deps.db, u.identity.uid, todayFor(u.profile.settings.timeZone, deps.now()), u.profile.writing));
 });
 
 /** Home → Notes: every dated entry across all notes, newest day first. */

@@ -1,83 +1,185 @@
-# Lumen Quill
+<h1 align="center">Lumen Quill</h1>
 
-A private, invitation-only archive of dated notes. Two display modes:
+<p align="center">
+  <strong>A private journal of dated notes, in two moods: Sonata and Palace.</strong><br>
+  Same day, keep writing · a new day, continue or begin anew · earlier days locked · light Markdown export and import
+</p>
 
-| Mode | Character |
+<p align="center">
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs">
+  <img alt="React" src="https://img.shields.io/badge/React-19-149eca?logo=react">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white">
+  <img alt="Firebase" src="https://img.shields.io/badge/Firebase-Auth%20%2B%20Firestore-ffca28?logo=firebase&logoColor=black">
+  <img alt="Vercel" src="https://img.shields.io/badge/Vercel-sin1-000000?logo=vercel">
+  <img alt="CI" src="https://img.shields.io/badge/CI-lint%20%C2%B7%20tests%20%C2%B7%20gitleaks%20%C2%B7%20OSV-2f6b45">
+  <img alt="License" src="https://img.shields.io/badge/license-all%20rights%20reserved-555">
+</p>
+
+<p align="center"><img src="docs/images/04-home-overview.png" alt="Lumen Quill Home in the Sonata mode, with sample data" width="900"></p>
+
+> Every screenshot uses **sample data** (a temporary demo account with generated notes). [Changelog](CHANGELOG.md)
+
+---
+
+## Contents
+
+1. [At a glance](#at-a-glance)
+2. [Screenshots](#screenshots)
+3. [Features](#features)
+4. [Architecture](#architecture)
+5. [Getting started](#getting-started)
+6. [Commands](#commands)
+7. [Documentation](#documentation)
+8. [Security](#security)
+9. [Conventions](#conventions)
+10. [License](#license)
+
+---
+
+## At a glance
+
+Lumen Quill keeps your writing by the day you wrote it. One note is a stack of dated sections. Coming back on the same day simply carries on. On a new day you choose to continue the latest note (a new section below the earlier, now locked, days) or to begin a new note.
+
+| | |
 |---|---|
-| **Sonata** | Modern and celestial: night sky, aurora haze, ivory type, gold filaments, thin HUD lines, bracketed panels |
-| **Palace** | Classic European court: silver vellum, royal navy ink, gilded double rules, engraved serif capitals, a ruled page |
+| **Users** | Invitation only. There is no sign-up; the single administrator creates every account |
+| **Sign-in** | Google, or e-mail + password (password changes only through an e-mailed link) |
+| **Modes** | **Sonata** (modern, celestial) and **Palace** (classic, European court) |
+| **Language** | English interface, English documentation and code |
+| **Devices** | Desktop, tablet and phone browsers |
 
-## How notes work
+| Role | Service | Plan |
+|---|---|---|
+| Hosting and API | Vercel, region Singapore `sin1` | Hobby |
+| Sign-in | Firebase Authentication | Spark (free) |
+| Data | Cloud Firestore, `asia-southeast1` (Singapore) | Spark (free) |
+| Code, CI, releases | GitHub + GitHub Actions | Free |
 
-- A note is made of **dated sections** (`YYYY-MM-DD`, in the writer's own time zone).
-- **Write today** on the same day → continues the latest note (cursor after the last character, on a new line).
-- **Write today** on a later day → by default asks: *continue* (adds today's section below the earlier days) or *start a new note*. Preferences can make either choice automatic.
-- **Only today's section can be written.** Earlier days are locked (read-only, deletable); to change one, export, edit and import it as a new note.
-- **New note** always creates a separate note.
-- Typing autosaves (debounced) with a visible status (*Saving…* → *All changes saved*), retries offline, refuses to overwrite a newer version from another tab, and the browser asks before you leave while a save is still pending.
+## Screenshots
 
-## Export / import
+| | |
+|---|---|
+| <img src="docs/images/01-landing-sonata.png" alt="Landing page, Sonata" width="440"><br>**Landing page**, Sonata | <img src="docs/images/02-landing-palace.png" alt="Landing page, Palace" width="440"><br>**Landing page**, Palace |
+| <img src="docs/images/05-home-notes.png" alt="Home, Notes" width="440"><br>**Home → Notes**: every dated entry, newest first | <img src="docs/images/06-home-archive.png" alt="Home, Archive" width="440"><br>**Home → Archive**: notes in creation order, numbered pages |
+| <img src="docs/images/07-write-today-dialog.png" alt="Write today dialog" width="440"><br>**Write today** on a new day: continue or begin anew | <img src="docs/images/08-note-sonata.png" alt="A note in Sonata" width="440"><br>**A note**: locked earlier days, today's box with live **bold** / *italic* |
+| <img src="docs/images/09-note-palace.png" alt="A note in Palace" width="440"><br>**Palace** mode on a ruled page | <img src="docs/images/14-mobile-note.png" alt="Phone" width="200"><br>**Phone** |
+| <img src="docs/images/13-settings-data.png" alt="Settings, Data" width="440"><br>**Settings → Data**: export, large imports, delete all | <img src="docs/images/16-admin-statistics.png" alt="Admin statistics" width="440"><br>**Admin → Statistics** with auto-delete |
 
-Plain `.md` or `.txt` (same structure, both tiny):
+The full illustrated guide is in [docs/User-Guide.md](docs/User-Guide.md).
+
+## Features
+
+**Writing**
+- Dated sections in the writer's own time zone. The same day continues; a new day asks to continue or start a new note (or does either automatically, as set under Preferences).
+- Only **today** can be written; earlier days are locked by the server (read-only, sized to their text, deletable).
+- Autosave with a visible status (*Saving…* → *All changes saved*), offline retry with a bounded back-off, protection against two tabs overwriting each other, and the browser's own "Leave site?" warning while a save is pending.
+- Light Markdown: `**bold**` and `*italic*` show live while typing (markers small and faint). Locked days are rendered with the markers hidden.
+- Empty notes disappear when you leave them.
+
+**Home**
+- **Overview**: today, totals, writing streak, recent notes.
+- **Notes**: every dated entry across all notes, grouped by month.
+- **Archive**: notes in creation order, 20 per page, jump to any page, title search.
+
+**Data**
+- Export everything or one note as `.md` or `.txt` (same readable structure, dated file names).
+- Import any number of files or a whole folder (up to 1,000 files / 50 MB at once), previewed, sent in chunks with a progress bar, never duplicating a note imported before.
+
+**Account and admin**
+- Profile photo (or a themed emblem), unique username, password reset link or "create a password" for Google-only accounts, sign out everywhere.
+- Admin: accounts (create, disable, sign out, delete, with confirmations), statistics, security posture, audit log, automatic deletion of statistics and audit data after 1/3/7/30 days, full or date-ranged JSON backup.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  B["Browser<br/>(desktop / phone)"] -->|HTTPS, HttpOnly session cookie| V["Vercel · Next.js 16<br/>app/ · client/ · server/"]
+  B -->|sign-in only| F["Firebase Authentication"]
+  V -->|verify session, manage accounts| F
+  V -->|Admin SDK, all data| S[("Cloud Firestore<br/>rules: deny every client")]
+  C["Vercel Cron (daily)"] -->|bearer secret| V
+```
 
 ```
-# Journal
-
-## 2026-11-26
-
-First day...
-
-## 2026-11-27
-
-Second day...
-```
-
-Several notes in one file are separated by a line `<!-- lumen:note -->`. Imported files always become new notes; text outside a date heading is dated today. Imports take any number of files (up to 1,000 / 50 MB at once) or a whole folder, are sent in chunks with a progress bar, and skip notes whose exact content was imported before.
-
-## Stack
-
-Next.js 16 (React 19, TypeScript) on **Vercel** (`sin1`) · **Firebase Auth** (Google + e-mail/password) · **Cloud Firestore** (`asia-southeast1`, Spark plan) · GitHub for versioning and CI.
-
-```
-app/       routes (pages + thin API route files)
-server/    everything that runs only on the server (Admin SDK, sessions, security, services)
-client/    browser code (components, theme, Firebase client SDK in client/auth only)
-shared/    pure code used by both (schemas, dates, Markdown interchange)
+app/       routes: pages and thin API route files
+client/    browser code: components, theme, Firebase client SDK (client/auth only)
+server/    server-only code: Admin SDK, sessions, security, services
+shared/    pure code used by both: schemas, dates, Markdown interchange
 tests/     vitest
 ```
 
-Layer boundaries are enforced by ESLint (e.g. the Admin SDK may only be imported in `server/firebase.ts`).
+Every request that changes data passes **Origin check → session → rate limit → strict Zod schema → service (owner from the session) → Firestore**. Layer boundaries are enforced by ESLint. Details: [Architecture.md](docs/Architecture.md) · [Database.md](docs/Database.md).
 
-## Accounts
+## Getting started
 
-There is **no public sign-up**. Exactly one administrator is created (from `ADMIN_EMAIL` / `ADMIN_USERNAME` in the secrets file) with:
+**Requirements:** Node.js 24 (`.nvmrc`), Git, a Firebase project (Auth + Firestore) and a Vercel project. Turn on two-factor sign-in everywhere.
 
-```
-node --env-file=<secrets file outside the repo> scripts/bootstrap-admin.mjs
-```
-
-The admin creates every other account in **Settings → Admin → Accounts** and manages security, the audit log, retention, backups and statistics there.
-
-## Layout
-
-- **Top bar** (fixed): brand on the left, profile photo on the right → *Home*, *Settings*, *Sign out*.
-- **Home** (`/home`): *Overview* (today, totals, streak, recent notes), *Notes* (every dated entry, newest first), *Archive* (the list of notes, 15 per page). Which tab opens first is a preference.
-- **Settings** (`/settings`): *Account* (photo, unique username, password reset link or create a password, sessions), *Preferences*, *Data* (export / import / delete all), *Admin* (admin only).
-- Signed-in visitors of `/` or `/login` go straight to Home; signed-out visitors of any app page go to sign-in.
-
-## Development
-
-Every change goes through a branch and a pull request; see [CONTRIBUTING.md](CONTRIBUTING.md).
-
-```
+```bash
+git clone git@github.com:<owner>/lumen-quill.git
+cd lumen-quill
 npm ci
-git config core.hooksPath scripts/hooks
-node --env-file=<secrets file> scripts/with-env.mjs dev
-npm run lint && npm run typecheck && npm test && npm run build && npm run audit:deps
+git config core.hooksPath scripts/hooks   # pre-commit: gitleaks · pre-push: no direct pushes to main
+npm test                                  # no external services needed
 ```
 
-Secrets never live in this folder (no `.env.local`). Variable names: [.env.example](.env.example). Security model: [SECURITY.md](SECURITY.md).
+**Secrets never live in the project folder.** Keep them in a file outside it and pass it with `--env-file`:
 
-## Deploy
+```bash
+node --env-file=../secrets/lumen-quill.env scripts/with-env.mjs dev
+```
 
-Push to `main` → Vercel builds and deploys. Environment variables are set in the Vercel project (Production).
+Variable names: [.env.example](.env.example) · full list and meaning: [Operations.md → Environment](docs/Operations.md#2-environment-variables).
+
+Setting up from scratch: [Operations.md → Setup](docs/Operations.md#1-setting-up-from-scratch) (Firebase Auth and Firestore, indexes and rules, service account, Vercel, the administrator account).
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `node --env-file=<file> scripts/with-env.mjs dev` | Development server (`localhost:3000`) with secrets from a file |
+| `npm run build` / `npm start` | Production build and server |
+| `npm run lint` | ESLint, including layer boundaries |
+| `npm run typecheck` | TypeScript |
+| `npm test` | All tests (no external services) |
+| `npm run audit:deps` | `npm audit`, any severity fails |
+| `node --env-file=<file> scripts/bootstrap-admin.mjs` | Create or repair the single administrator |
+| `node scripts/apply-rulesets.mjs <owner>/<repo>` | Apply the GitHub rulesets in `.github/rulesets/` |
+
+## Documentation
+
+| Document | Contents |
+|---|---|
+| [User-Guide.md](docs/User-Guide.md) | How to use the app, illustrated (writers and the administrator) |
+| [Pages.md](docs/Pages.md) | Map of pages, tabs and menus |
+| [Architecture.md](docs/Architecture.md) | Layers, request flow, caching, data model |
+| [Database.md](docs/Database.md) | Firestore collections, indexes, rules, quotas |
+| [Api.md](docs/Api.md) | Every endpoint |
+| [Operations.md](docs/Operations.md) | Setup, environment, deploy, cron, quotas, backups, scripts |
+| [Security.md](docs/Security.md) | Threat model, controls, provider settings, audit results, incident procedures |
+| [Troubleshooting.md](docs/Troubleshooting.md) | Symptoms, causes, fixes |
+| [Dependencies.md](docs/Dependencies.md) | Why each library is used, and pins |
+| [Glossary.md](docs/Glossary.md) | Terms |
+| [Agent.md](docs/Agent.md) | Context and rules for continuing the project with an AI assistant |
+
+## Security
+
+- Authorisation on the server for **every** request; the owner always comes from the session, and anything else answers 404.
+- The browser never talks to Firestore: security rules deny every client, and all data goes through the server.
+- HttpOnly `__Host-` session cookie, Origin + Fetch-Metadata CSRF checks, strict input schemas, byte limits, rate limits, a nonce-based Content Security Policy.
+- Cost and quota guards: autosave throttling, cached reads, bounded retries, heavy-read limits, and a Firebase API key restricted to the app's domains and to the Auth APIs.
+- No secrets in the repository (gitleaks in CI and pre-commit), no personal data in logs.
+
+Details and the latest audit: [docs/Security.md](docs/Security.md). Found a vulnerability? See **[SECURITY.md](SECURITY.md)**.
+
+## Conventions
+
+- **Commits:** `feat:`, `fix:`, `docs:`, `chore:`, `test:`, `ci:` (English).
+- **Branch → pull request → green CI → merge.** Merging to `main` deploys production; `main` is never pushed to directly. Releases are tagged `vX.Y.Z` with a GitHub Release and a `release/X.Y` branch.
+- **Every change updates the affected documentation**, including [CHANGELOG.md](CHANGELOG.md). `tests/docs-consistency.test.ts` checks versions, links, images and the endpoint list.
+- **Screenshots** in `docs/images/` use sample data only.
+
+Contributing guide: [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+All rights reserved ([LICENSE](LICENSE)). The source is visible for reference; it is not open-source software.

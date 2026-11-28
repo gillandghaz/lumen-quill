@@ -23,7 +23,7 @@ export function Backup() {
           q.set("from", from);
           q.set("to", to);
         }
-        const r: { users?: unknown[]; notes: unknown[]; nextCursor: string | null } = await api(`/api/admin/backup?${q}`);
+        const r: { users?: unknown[]; notes: unknown[]; nextCursor: string | null } = await api(`/api/admin/backup?${q}`, { fresh: true });
         if (r.users) users.push(...r.users);
         notes.push(...r.notes);
         setState({ busy: true, text: `Collected ${notes.length} notes…`, ok: true });

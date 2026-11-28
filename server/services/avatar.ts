@@ -3,6 +3,7 @@ import type { CurrentUser } from "../session";
 import { isAdmin } from "../session";
 import { COLLECTIONS } from "../config";
 import { HttpError } from "../errors";
+import { forgetProfile } from "./profile";
 
 /**
  * Profile photos: a 256 px JPEG made in the browser, stored as bytes in avatars/{uid} (Spark plan: no Storage needed).
@@ -21,6 +22,7 @@ export async function setAvatar(deps: Deps, uid: string, dataUrl: string): Promi
   batch.set(deps.db.collection(COLLECTIONS.avatars).doc(uid), { bytes, updatedAt: version });
   batch.update(deps.db.collection(COLLECTIONS.users).doc(uid), { avatarVersion: version });
   await batch.commit();
+  forgetProfile(uid);
   return version;
 }
 
@@ -29,6 +31,7 @@ export async function removeAvatar(deps: Deps, uid: string): Promise<void> {
   batch.delete(deps.db.collection(COLLECTIONS.avatars).doc(uid));
   batch.update(deps.db.collection(COLLECTIONS.users).doc(uid), { avatarVersion: null });
   await batch.commit();
+  forgetProfile(uid);
 }
 
 /** Own photo, or anyone's for the admin. Everything else is 404 (existence never leaks). */

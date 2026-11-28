@@ -3,7 +3,7 @@ import type { SessionIdentity } from "./auth";
 import { HttpError } from "./errors";
 import { sessionCookieName } from "./config";
 import { readCookie } from "./http/cookies";
-import { getProfile, type Profile } from "./services/profile";
+import { getProfileCached, type Profile } from "./services/profile";
 
 export interface CurrentUser {
   identity: SessionIdentity;
@@ -18,7 +18,7 @@ export async function resolveCurrentUser(cookie: string | null, deps: Deps): Pro
   if (!cookie) return null;
   const identity = await deps.auth.verifySession(cookie);
   if (!identity) return null;
-  const profile = await getProfile(deps.db, identity.uid);
+  const profile = await getProfileCached(deps.db, identity.uid, deps.now());
   if (!profile || profile.disabled) return null;
   return { identity, profile };
 }

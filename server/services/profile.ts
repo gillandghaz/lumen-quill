@@ -25,6 +25,8 @@ export interface Profile {
   usernameChangedAt: number | null;
   /** updatedAt of the custom profile photo (cache-buster); null = themed default avatar. */
   avatarVersion: number | null;
+  /** Writing streak, updated when a new day is first written (so Overview needs no scan). */
+  writing: { lastDay: string | null; streak: number };
   settings: UserSettings;
 }
 
@@ -46,8 +48,31 @@ export function normalizeProfile(uid: string, d: Record<string, unknown>): Profi
     lastLoginAt: typeof d["lastLoginAt"] === "number" ? d["lastLoginAt"] : null,
     usernameChangedAt: typeof d["usernameChangedAt"] === "number" ? d["usernameChangedAt"] : null,
     avatarVersion: typeof d["avatarVersion"] === "number" ? d["avatarVersion"] : null,
+    writing: {
+      lastDay: typeof (d["writing"] as { lastDay?: unknown } | undefined)?.lastDay === "string" ? (d["writing"] as { lastDay: string }).lastDay : null,
+      streak: typeof (d["writing"] as { streak?: unknown } | undefined)?.streak === "number" ? (d["writing"] as { streak: number }).streak : 0,
+    },
     settings: { ...DEFAULT_SETTINGS, ...s },
   };
+}
+
+/**
+ * Profiles are read on every request (session check). They are kept for 15 s in this server instance's memory and
+ * dropped whenever this instance changes them. Security is unaffected: the session signature is verified on every
+ * request, and a disabled account is still refused within ~60 s (Firebase revocation check).
+ */
+const PROFILE_TTL_MS = 15_000;
+const profileCache = new Map<string, { at: number; p: Profile | null }>();
+export function forgetProfile(uid: string): void {
+  profileCache.delete(uid);
+}
+export async function getProfileCached(db: Firestore, uid: string, now = Date.now()): Promise<Profile | null> {
+  const hit = profileCache.get(uid);
+  if (hit && now - hit.at < PROFILE_TTL_MS) return hit.p;
+  const p = await getProfile(db, uid);
+  if (profileCache.size > 5000) profileCache.clear();
+  profileCache.set(uid, { at: now, p });
+  return p;
 }
 
 export async function getProfile(db: Firestore, uid: string): Promise<Profile | null> {
@@ -76,7 +101,7 @@ export async function changeUsername(db: Firestore, uid: string, username: strin
     if (p.username) tx.delete(db.collection(COLLECTIONS.usernames).doc(p.username));
     tx.update(userRef, { username, usernameChangedAt: now });
     return username;
-  });
+  }).finally(() => forgetProfile(uid));
 }
 
 export async function updateSettings(db: Firestore, uid: string, patch: Partial<UserSettings>): Promise<UserSettings> {
@@ -87,5 +112,5 @@ export async function updateSettings(db: Firestore, uid: string, patch: Partial<
     const next = { ...normalizeProfile(uid, snap.data() ?? {}).settings, ...patch };
     tx.update(ref, { settings: next });
     return next;
-  });
+  }).finally(() => forgetProfile(uid));
 }

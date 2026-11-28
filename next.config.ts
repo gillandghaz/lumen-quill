@@ -27,6 +27,9 @@ const apiHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Client router cache: a page visited in the last 30 s is shown again without a new server render (each render
+  // reads the profile). Per tab, in memory only; never shared between users.
+  experimental: { staleTimes: { dynamic: 30 } },
   // Old addresses keep working.
   async redirects() {
     return [

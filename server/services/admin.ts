@@ -4,7 +4,7 @@ import { COLLECTIONS, SESSION_TTL_MS } from "../config";
 import { HttpError } from "../errors";
 import { authErrorCode } from "../auth";
 import type { CurrentUser } from "../session";
-import { DEFAULT_SETTINGS, normalizeProfile, reserveUsername, type Profile } from "./profile";
+import { DEFAULT_SETTINGS, forgetProfile, normalizeProfile, reserveUsername, type Profile } from "./profile";
 import { deleteAllNotes } from "./notes";
 import { writeAudit } from "./audit";
 import { readActivity } from "./activity";
@@ -29,7 +29,9 @@ export async function listUsers(deps: Deps): Promise<AdminUserView[]> {
   const profiles = snap.docs.map((d) => normalizeProfile(d.id, d.data()));
   const [counts, records] = await Promise.all([
     Promise.all(profiles.map((p) => deps.db.collection(COLLECTIONS.notes).where("ownerUid", "==", p.uid).count().get().then((c) => c.data().count))),
-    profiles.length ? adminAuth().getUsers(profiles.map((p) => ({ uid: p.uid }))) : Promise.resolve({ users: [] }),
+    // getUsers accepts at most 100 identifiers per call.
+    Promise.all(Array.from({ length: Math.ceil(profiles.length / 100) }, (_, i) => adminAuth().getUsers(profiles.slice(i * 100, i * 100 + 100).map((p) => ({ uid: p.uid })))))
+      .then((rs) => ({ users: rs.flatMap((r) => r.users) })),
   ]);
   const byUid = new Map(records.users.map((u) => [u.uid, u]));
   return profiles.map((p, i) => ({
@@ -77,6 +79,7 @@ export async function createUser(deps: Deps, admin: CurrentUser, input: { email:
         lastLoginAt: null,
         usernameChangedAt: null,
         avatarVersion: null,
+        writing: { lastDay: null, streak: 0 },
         settings: DEFAULT_SETTINGS,
       };
       tx.create(deps.db.collection(COLLECTIONS.users).doc(uid), profile);
@@ -103,6 +106,7 @@ export async function setDisabled(deps: Deps, admin: CurrentUser, uid: string, d
   await targetUser(deps, admin, uid);
   await adminAuth().updateUser(uid, { disabled });
   await deps.db.collection(COLLECTIONS.users).doc(uid).update({ disabled });
+  forgetProfile(uid);
   if (disabled) await deps.auth.revokeAllSessions(uid);
   await writeAudit(deps.db, { action: disabled ? "admin.user_disable" : "admin.user_enable", actorUid: admin.identity.uid, targetUid: uid }, deps.now());
 }
