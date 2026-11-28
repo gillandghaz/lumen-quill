@@ -6,16 +6,18 @@ import { Avatar } from "./Avatar";
 import { ConfirmDialog } from "./Modal";
 import { logout } from "@/client/auth/actions";
 import { confirmLeave, goHome } from "@/client/lib/unsaved";
+import { useLiveUser } from "@/client/lib/live-user";
 
 export interface MenuUser { uid: string; username: string; email: string; admin: boolean; avatarVersion: number | null }
 
 /** Top-right profile photo. Opens: Home, Settings, Sign out (with confirmation). */
-export function ProfileMenu({ user }: { user: MenuUser }) {
+export function ProfileMenu({ user: serverUser }: { user: MenuUser }) {
+  const user = useLiveUser(serverUser);
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [avatarVersion, setAvatarVersion] = useState(user.avatarVersion);
+  const avatarVersion = user.avatarVersion;
   const wrap = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -23,15 +25,11 @@ export function ProfileMenu({ user }: { user: MenuUser }) {
       if (wrap.current && !wrap.current.contains(e.target as Node)) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    // The Account tab announces a new / removed photo so the menu updates without a reload.
-    const onAvatar = (e: Event) => setAvatarVersion((e as CustomEvent<number | null>).detail);
     document.addEventListener("click", onDoc);
     document.addEventListener("keydown", onKey);
-    window.addEventListener("lq:avatar", onAvatar);
     return () => {
       document.removeEventListener("click", onDoc);
       document.removeEventListener("keydown", onKey);
-      window.removeEventListener("lq:avatar", onAvatar);
     };
   }, []);
 

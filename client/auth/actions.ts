@@ -8,6 +8,8 @@ import {
   signOut,
 } from "@firebase/auth";
 import { clientAuth } from "./firebase-client";
+import { clearLiveUser } from "@/client/lib/live-user";
+import { MODE_COOKIE } from "@/shared/limits";
 
 /** Result codes mapped to text by the UI. Messages are deliberately generic (no account enumeration). */
 export type AuthResult =
@@ -38,7 +40,15 @@ async function exchange(): Promise<AuthResult> {
     return { ok: false, code: "network" };
   }
   await signOut(auth).catch(() => undefined);
-  if (res.ok) return { ok: true };
+  if (res.ok) {
+    clearLiveUser();
+    const mode = ((await res.json().catch(() => ({}))) as { mode?: string }).mode;
+    if (mode === "sonata" || mode === "palace") {
+      const secure = window.location.protocol === "https:" ? "; Secure" : "";
+      document.cookie = `${MODE_COOKIE}=${mode}; Path=/; Max-Age=31536000; SameSite=Lax${secure}`;
+    }
+    return { ok: true };
+  }
   if (res.status === 429) return { ok: false, code: "rate_limited" };
   if (res.status === 403) return { ok: false, code: "not_allowed" };
   return { ok: false, code: "generic" };
@@ -91,10 +101,12 @@ export async function requestPasswordReset(email: string): Promise<void> {
 }
 
 export async function logout(): Promise<void> {
+  clearLiveUser();
   await post("/api/auth/logout").catch(() => undefined);
 }
 
 export async function logoutEverywhere(): Promise<boolean> {
+  clearLiveUser();
   const res = await post("/api/auth/logout-all").catch(() => null);
   return res?.ok === true;
 }

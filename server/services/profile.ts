@@ -63,13 +63,20 @@ export function normalizeProfile(uid: string, d: Record<string, unknown>): Profi
  */
 const PROFILE_TTL_MS = 15_000;
 const profileCache = new Map<string, { at: number; p: Profile | null }>();
+// Bumped on every change: a read that started before a change must not put the old profile back in the cache.
+let generation = 0;
+const changedAt = new Map<string, number>();
 export function forgetProfile(uid: string): void {
   profileCache.delete(uid);
+  if (changedAt.size > 5000) changedAt.clear();
+  changedAt.set(uid, ++generation);
 }
 export async function getProfileCached(db: Firestore, uid: string, now = Date.now()): Promise<Profile | null> {
   const hit = profileCache.get(uid);
   if (hit && now - hit.at < PROFILE_TTL_MS) return hit.p;
+  const started = generation;
   const p = await getProfile(db, uid);
+  if ((changedAt.get(uid) ?? 0) > started) return p; // changed while reading: use it, but do not cache it
   if (profileCache.size > 5000) profileCache.clear();
   profileCache.set(uid, { at: now, p });
   return p;

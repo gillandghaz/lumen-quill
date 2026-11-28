@@ -12,7 +12,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   const tab = isHomeTab(wanted) ? wanted : ctx.user.settings.homeTab;
   return (
     <main id="main" className="main">
-      <Home username={ctx.user.username} initialTab={tab} />
+      <Home username={ctx.user.username} initialTab={tab} explicitTab={isHomeTab(wanted)} />
     </main>
   );
 }

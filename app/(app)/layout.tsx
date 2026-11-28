@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { BrandLink } from "@/client/components/BrandLink";
 import { ProfileMenu } from "@/client/components/ProfileMenu";
 import { SessionWatcher } from "@/client/auth/SessionWatcher";
+import { LiveFontScale } from "@/client/components/LiveFontScale";
 import { loadPageContext } from "@/server/page-guards";
 
 /**
@@ -22,6 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="app-shell" style={{ ["--font-scale" as string]: String(u.settings.fontScale) }}>
       <SessionWatcher />
+      <LiveFontScale server={u.settings.fontScale} />
       <header className="topbar">
         <BrandLink href="/home" />
         <ProfileMenu user={{ uid: u.uid, username: u.username, email: u.email, admin: u.admin, avatarVersion: u.avatarVersion }} />
