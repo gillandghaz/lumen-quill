@@ -18,4 +18,3 @@
 | Local `next build` fails with "--env-file= is not allowed in NODE_OPTIONS" | Next passes Node flags to its workers | Use `node --env-file=<file> scripts/with-env.mjs build` |
 | `pr-only` CI job red on `main` | A commit reached `main` without a pull request | Revert it through a pull request; never push to `main` directly |
 | Firestore created in the US by `firebase deploy` | Deploying rules before creating the database | Delete the empty database and create it in the right region before deploying (the id is reusable after a few minutes) |
-| PR shows "Vercel – GitHub couldn't verify an account for the commit" | By design: commits are authored as `Lumen Quill <dev@lumen-quill.invalid>` (no personal identity in the public history), and Vercel Hobby only builds commits of a known account. Only the preview is affected; previews do not run anyway (no `APP_ORIGIN`). Production deploys the merge commit on `main` | Nothing to do |

@@ -45,7 +45,7 @@ Lumen Quill is a private, invitation-only journal of dated notes.
 | Quota | Keep Firestore reads and writes minimal: caches, throttled autosave, no prefetch on note links, bounded retries, heavy-read limits |
 | UI | Smooth transitions everywhere; dialogs centred, no scrollbars; fixed top bar; buttons lock while busy (no double actions) |
 | Infrastructure | Server close to Indonesia: Vercel `sin1` + Firestore `asia-southeast1`. No Docker needed |
-| Repository | Public, all rights reserved. No owner username or e-mail in files (except LICENSE, which names the copyright holder), screenshots or commit authorship (author "Lumen Quill" `<dev@lumen-quill.invalid>`). Commit dates are set to the next day |
+| Repository | Public, all rights reserved. No owner e-mail anywhere. Commits: author and committer = the owner's GitHub account with its no-reply address (`<id>+<owner>@users.noreply.github.com`), plus the trailer `Co-authored-by: Lumen Quill <dev@lumen-quill.invalid>`. The username appears only in LICENSE (copyright holder) and commit metadata, never in docs or screenshots. Commit dates are set to the next day |
 
 ## 4. Architecture rules
 

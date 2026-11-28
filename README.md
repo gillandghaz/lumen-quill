@@ -62,7 +62,7 @@ Lumen Quill keeps your writing by the day you wrote it. One note is a stack of d
 | <img src="docs/images/01-landing-sonata.png" alt="Landing page, Sonata" width="440"><br>**Landing page**, Sonata | <img src="docs/images/02-landing-palace.png" alt="Landing page, Palace" width="440"><br>**Landing page**, Palace |
 | <img src="docs/images/05-home-notes.png" alt="Home, Notes" width="440"><br>**Home → Notes**: every dated entry, newest first | <img src="docs/images/06-home-archive.png" alt="Home, Archive" width="440"><br>**Home → Archive**: notes in creation order, numbered pages |
 | <img src="docs/images/07-write-today-dialog.png" alt="Write today dialog" width="440"><br>**Write today** on a new day: continue or begin anew | <img src="docs/images/08-note-sonata.png" alt="A note in Sonata" width="440"><br>**A note**: locked earlier days, today's box with live **bold** / *italic* |
-| <img src="docs/images/09-note-palace.png" alt="A note in Palace" width="440"><br>**Palace** mode on a ruled page | <img src="docs/images/14-mobile-note.png" alt="Phone" width="200"><br>**Phone** |
+| <img src="docs/images/09-note-palace.png" alt="A note in Palace" width="440"><br>**Palace** mode on a ruled page | <p align="center"><img src="docs/images/14-mobile-note.png" alt="Phone" width="200"><br><strong>Phone</strong></p> |
 | <img src="docs/images/13-settings-data.png" alt="Settings, Data" width="440"><br>**Settings → Data**: export, large imports, delete all | <img src="docs/images/16-admin-statistics.png" alt="Admin statistics" width="440"><br>**Admin → Statistics** with auto-delete |
 
 The full illustrated guide is in [docs/User-Guide.md](docs/User-Guide.md).

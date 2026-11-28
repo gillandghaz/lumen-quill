@@ -71,7 +71,7 @@ Which tab opens first is set under **Settings → Preferences → Open on**; cli
 - Opening a note lands on today's section with the cursor after the last character. Continuing on the same day adds a new line for you.
 - An older note opened from the Archive is read-only, with **Continue this note today** underneath.
 - Typing saves automatically. The badge at the top shows **Saving…** and then **All changes saved**. If you close or reload the tab while a save is pending, the browser asks before leaving.
-- `**bold**` and `*italic*` appear bold and italic as you type. The asterisks stay but are small and faint; on locked days they are hidden.
+- `**bold**` and `*italic*` appear bold and slanted as you type. The asterisks stay but are small and faint; on locked days they are hidden and the text uses the real italic face.
 - Clearing today's text removes today's section. A note with nothing written disappears when you leave it.
 - **Export .md / .txt** downloads this note; **Delete** removes the whole note (after a confirmation).
 
@@ -160,4 +160,4 @@ The administrator has an extra **Admin** section under Settings.
 
 On a phone the same pages stack into one column:
 
-<img src="images/14-mobile-note.png" alt="Phone" width="260">
+<p align="center"><img src="images/14-mobile-note.png" alt="Phone" width="260"></p>

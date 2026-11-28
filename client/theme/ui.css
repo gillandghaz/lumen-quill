@@ -497,10 +497,16 @@ label.btn[aria-disabled="true"] { opacity: 0.6; pointer-events: none; }
 .editor-input::selection { color: transparent; background: color-mix(in srgb, var(--accent) 30%, transparent); }
 /* Bold: thicker stroke, same advance widths. */
 .editor-mirror .md-b { -webkit-text-stroke: 0.045em currentColor; paint-order: stroke fill; }
-/* Italic: synthetic slant of the upright face, same advance widths. */
-.editor-mirror .md-i { font-style: oblique 10deg; font-synthesis: style; }
+/* Italic: every word is slanted by a transform. As an inline-block its width is unchanged (the caret stays on the
+   right character) and lines still break between words, exactly like the textarea. Clearly visible in every browser. */
+.editor-mirror .md-i { font-style: normal; }
+.editor-mirror .md-iw { display: inline-block; transform: skewX(-12deg); transform-origin: 50% 80%; }
 /* Markers stay in place (their width is kept) but look smaller and faint. */
 .editor-mirror .md-mark { display: inline-block; transform: scale(0.72); transform-origin: 50% 70%; opacity: 0.28; font-style: normal; -webkit-text-stroke: 0; }
 
 /* Admin tables: headers and dates on one line. */
 .table th, .table td.small { white-space: nowrap; }
+
+/* Formatted (read) views use the real italic faces: Inter Italic in Sonata, Cormorant Garamond Italic in Palace. */
+.editor-rendered em, .entry-read em { font-style: italic; }
+[data-mode="palace"] .editor-rendered em, [data-mode="palace"] .entry-read em { font-family: var(--f-cormorant), Georgia, serif; }

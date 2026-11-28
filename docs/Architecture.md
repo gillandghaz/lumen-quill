@@ -85,7 +85,9 @@ API responses stay `Cache-Control: no-store`, so nothing private is written to d
 
 Today's box is a transparent `<textarea>` over a styled mirror. Both share the same font, padding, line height and wrapping. To keep every glyph the same width (so the caret never drifts):
 - bold is a text stroke;
-- italic is a synthetic slant of an upright-only font face;
+- italic slants **each word** with `transform: skewX(-12deg)` on an inline-block (same width, and lines still break between words). A font-based slant is not used: browsers may skip synthetic oblique for variable fonts, and a real italic face has different widths;
 - markers keep their width and are only visually scaled and faded.
 
-A test checks that the mirror contains exactly the typed characters.
+Read-only views (locked days) use the real italic faces (Inter Italic, Cormorant Garamond Italic).
+
+Tests check that the mirror contains exactly the typed characters, including inside italic words.

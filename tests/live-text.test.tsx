@@ -16,7 +16,7 @@ describe("live formatting mirror", () => {
   it("marks bold, italic and the markers", () => {
     const h = html("a **b** *i*");
     expect(h).toContain('<span class="md-b"><span class="md-mark">**</span>b<span class="md-mark">**</span></span>');
-    expect(h).toContain('<span class="md-i"><span class="md-mark">*</span>i<span class="md-mark">*</span></span>');
+    expect(h).toContain('<span class="md-i"><span class="md-mark">*</span><span class="md-iw">i</span><span class="md-mark">*</span></span>');
   });
   it("never renders raw HTML", () => {
     expect(html("<b>x</b>")).not.toContain("<b>");
@@ -61,5 +61,13 @@ describe("server profile cache", async () => {
     forgetProfile("uid-cache-test");
     await getProfileCached(fake, "uid-cache-test", 17_500);
     expect(reads).toBe(3);
+  });
+});
+
+describe("live italic", () => {
+  it("wraps each italic word for the slant and keeps every character", () => {
+    const h = html("a *two words* b");
+    expect(h).toContain('<span class="md-iw">two</span> <span class="md-iw">words</span>');
+    expect(plain(h)).toBe("a *two words* b​");
   });
 });
